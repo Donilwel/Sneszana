@@ -1,6 +1,8 @@
 package main
 
 import (
+	"Sneszana/config"
+	"Sneszana/database/migrations"
 	"Sneszana/handlers"
 	"github.com/gorilla/mux"
 	"log"
@@ -8,6 +10,8 @@ import (
 )
 
 func main() {
+	config.LoadEnv()
+	migrations.InitDB()
 	r := mux.NewRouter()
 	apiRouter := r.PathPrefix("/api").Subrouter()
 	restaurantsRouter := apiRouter.PathPrefix("/restaurants").Subrouter()

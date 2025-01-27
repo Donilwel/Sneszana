@@ -28,6 +28,16 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
+	if migrations.DB.Where("email = ?", input.Email).First(&models.User{}).Error == nil {
+		log.Println("user with email already exists")
+		http.Error(w, "user with email already exists", http.StatusBadRequest)
+		return
+	}
+	if migrations.DB.Where("name = ?", input.Name).First(&models.User{}).Error == nil {
+		log.Println("user with nickname " + input.Name + " already exists")
+		http.Error(w, "user with nickname "+input.Name+" already exists", http.StatusBadRequest)
+		return
+	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {

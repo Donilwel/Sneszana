@@ -21,14 +21,15 @@ func InitDB() {
 		os.Getenv("POSTGRES_PORT"),
 	)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("failed to connect to PostgreSQL database: %v", err)
 	}
 
-	if err := db.AutoMigrate(
-		&models.Dish{},
+	if err := DB.AutoMigrate(
 		&models.Restaurant{},
+		&models.Dish{},
 		&models.User{},
 	); err != nil {
 		log.Println("error migrating database")

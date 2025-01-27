@@ -51,3 +51,43 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 	utils.JSONFormat(w, r, map[string]string{"message": "User registered successfully"})
 }
+
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		log.Println("invalid request body")
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if input.Email == "" || input.Password == "" {
+		log.Println("invalid. email or password is empty")
+		http.Error(w, "invalid. email or password is empty", http.StatusBadRequest)
+		return
+	}
+
+	var user models.User
+	if err := migrations.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
+		log.Println("invalid email or password")
+		http.Error(w, "invalid email or password", http.StatusNotFound)
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
+		log.Println("invalid email or password")
+		http.Error(w, "invalid email or password", http.StatusNotFound)
+		return
+	}
+
+	token, err := utils.GenerateJWT(user.ID, user.Email)
+	if err != nil {
+		log.Println("failed to generate JWT")
+		http.Error(w, "failed to generate JWT", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
+}

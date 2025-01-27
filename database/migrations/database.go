@@ -29,6 +29,7 @@ func InitDB() {
 	if err := db.AutoMigrate(
 		&models.Dish{},
 		&models.Restaurant{},
+		&models.User{},
 	); err != nil {
 		log.Println("error migrating database")
 		return

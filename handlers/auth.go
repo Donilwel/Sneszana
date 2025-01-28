@@ -58,7 +58,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
+	utils.JSONFormat(w, r, user)
 	utils.JSONFormat(w, r, map[string]string{"message": "User registered successfully"})
 }
 
@@ -98,6 +98,5 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to generate JWT", http.StatusInternalServerError)
 		return
 	}
-
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
+	utils.JSONFormat(w, r, map[string]string{"token": token})
 }

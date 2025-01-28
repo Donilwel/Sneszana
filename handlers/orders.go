@@ -23,3 +23,7 @@ func UpdateOrderHandler(writer http.ResponseWriter, request *http.Request) {
 func DeleteOrderHandler(writer http.ResponseWriter, request *http.Request) {
 
 }
+
+func SetReviewHandler(w http.ResponseWriter, r *http.Request) {
+
+}

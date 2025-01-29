@@ -31,29 +31,29 @@ func SetRolesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch role {
-	case "ADMIN_ROLE":
-		if user.Role == "ADMIN_ROLE" {
+	case models.ADMIN_ROLE:
+		if user.Role == models.ADMIN_ROLE {
 			log.Println("error change, user already has ADMIN_ROLE")
 			http.Error(w, "user already has ADMIN_ROLE", http.StatusBadRequest)
 			return
 		}
-		user.Role = "ADMIN_ROLE"
+		user.Role = models.ADMIN_ROLE
 		log.Println("user role now ADMIN_ROLE")
-	case "CUSTOM_ROLE":
-		if user.Role == "CUSTOM_ROLE" {
+	case models.CUSTOMER_ROLE:
+		if user.Role == models.CUSTOMER_ROLE {
 			log.Println("error change, user already has CUSTOM_ROLE")
 			http.Error(w, "user already has CUSTOM_ROLE", http.StatusBadRequest)
 			return
 		}
-		user.Role = "CUSTOM_ROLE"
+		user.Role = models.CUSTOMER_ROLE
 		log.Println("user role now CUSTOM_ROLE")
-	case "COURIER_ROLE":
-		if user.Role == "COURIER_ROLE" {
+	case models.COURIER_ROLE:
+		if user.Role == models.COURIER_ROLE {
 			log.Println("error change, user already has COURIER_ROLE")
 			http.Error(w, "user already has COURIER_ROLE", http.StatusBadRequest)
 			return
 		}
-		user.Role = "COURIER_ROLE"
+		user.Role = models.COURIER_ROLE
 		log.Println("user role now COURIER_ROLE")
 	default:
 		log.Println("role not exist")

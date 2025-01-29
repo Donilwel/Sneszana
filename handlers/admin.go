@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 func ShowAllCouriersHandler(w http.ResponseWriter, r *http.Request) {
@@ -16,18 +15,21 @@ func SetRolesHandler(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	params := mux.Vars(r)
 
-	username, err := strconv.Atoi(params["username"])
-	if err != nil {
-		log.Println("username uncorrect or not exist")
-		http.Error(w, "username uncorrect or not exist", http.StatusBadRequest)
-		return
-	}
-	role := r.URL.Query().Get("role")
-	if err := migrations.DB.Where("username = ?", username).First(&user).Error; err != nil {
+	username := params["username"]
+
+	if err := migrations.DB.Where("name = ?", username).First(&user).Error; err != nil {
 		log.Println("user not exist")
 		http.Error(w, "user not exist", http.StatusBadRequest)
 		return
 	}
+
+	role := r.URL.Query().Get("role")
+	if role == "" {
+		log.Println("role is required")
+		http.Error(w, "role is required", http.StatusBadRequest)
+		return
+	}
+
 	switch role {
 	case "ADMIN_ROLE":
 		if user.Role == "ADMIN_ROLE" {
@@ -64,6 +66,7 @@ func SetRolesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("user role updated successfully"))
 }
 
 func ShowCourierHandler(w http.ResponseWriter, r *http.Request) {

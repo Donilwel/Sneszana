@@ -31,6 +31,7 @@ func InitDB() {
 		&models.Restaurant{},
 		&models.Dish{},
 		&models.User{},
+		&models.Courier{},
 	); err != nil {
 		log.Println("error migrating database")
 		return

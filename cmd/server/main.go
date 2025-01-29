@@ -15,7 +15,7 @@ func main() {
 	config.LoadEnv()
 	migrations.InitDB()
 	r := mux.NewRouter()
-	
+
 	apiRouter := r.PathPrefix("/api").Subrouter()
 	apiRouter.HandleFunc("/ping", handlers.PingHandler).Methods("GET")
 
@@ -27,6 +27,7 @@ func main() {
 	authRouter := apiRouter.PathPrefix("/auth").Subrouter()
 	authRouter.HandleFunc("/register", handlers.RegisterHandler).Methods("POST")
 	authRouter.HandleFunc("/login", handlers.LoginHandler).Methods("POST")
+	authRouter.HandleFunc("/logout", handlers.LogoutHandler).Methods("POST")
 
 	ordersRouter := apiRouter.PathPrefix("/orders").Subrouter()
 	ordersRouter.Use(utils.AuthMiddleware(models.CUSTOMER_ROLE))

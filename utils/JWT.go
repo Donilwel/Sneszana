@@ -41,7 +41,12 @@ func AuthMiddleware(requiredRole string) func(http.Handler) http.Handler {
 				return
 			}
 			tokenString = parts[1]
-
+			var revokedToken models.RevokedToken
+			if err := migrations.DB.Where("token = ?", tokenString).First(&revokedToken).Error; err == nil {
+				log.Println("please re-login, you logout")
+				http.Error(w, "please re-login, you logout", http.StatusUnauthorized)
+				return
+			}
 			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])

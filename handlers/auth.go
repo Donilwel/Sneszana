@@ -8,6 +8,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,4 +100,23 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.JSONFormat(w, r, map[string]string{"token": token})
+}
+
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		log.Println("no have token")
+		http.Error(w, "no have token", http.StatusUnauthorized)
+		return
+	}
+	parts := strings.Split(token, " ")
+	revoked := models.RevokedToken{Token: parts[1]}
+	if err := migrations.DB.Save(&revoked).Error; err != nil {
+		log.Println("failed to revoke token")
+		http.Error(w, "failed to revoke token", http.StatusInternalServerError)
+		return
+	}
+	log.Println("Logout successfully")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Logout successfully"))
 }

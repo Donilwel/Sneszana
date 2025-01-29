@@ -1,6 +1,7 @@
 package models
 
 import (
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -10,14 +11,15 @@ const (
 	WAITING  string = "WAITING"
 )
 
-type Courier struct {
-	ID          uint    `gorm:"primaryKey"`
-	UserID      uint    `gorm:"not null;unique;index"`
-	User        User    `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
-	Vehicle     string  `gorm:"type:varchar(100);not null;default:'NONE'"`
-	Status      string  `gorm:"type:varchar(100);not null;default:'UNACTIVE'"`
-	CountOrders uint    `gorm:"default:0"`
-	Rating      float32 `gorm:"type:decimal(10,2);not null"`
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+type Worker struct {
+	ID          uint           `gorm:"primaryKey"`
+	UserID      uint           `gorm:"unique;not null;OnDelete:CASCADE"`
+	User        User           `gorm:"foreignKey:UserID"`
+	Rating      float64        `gorm:"type:decimal(3,2);default:5.0"`
+	Vehicle     string         `gorm:"type:varchar(50);not null"`
+	OrdersCount int            `gorm:"default:0"`
+	Status      string         `gorm:"type:varchar(20);not null;default:'waiting'"`
+	CreatedAt   time.Time      `gorm:"precision:6"`
+	UpdatedAt   time.Time      `gorm:"precision:6"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }

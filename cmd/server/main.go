@@ -47,8 +47,8 @@ func main() {
 
 	courierRouter := apiRouter.PathPrefix("/courier").Subrouter()
 	courierRouter.Use(utils.AuthMiddleware(models.COURIER_ROLE))
-	courierRouter.HandleFunc("/status", handlers.DeleteOrderHandler).Methods("GET")
-	courierRouter.HandleFunc("/status/{username}/set", handlers.ShowOrderHandler).Methods("PUT")
+	courierRouter.HandleFunc("", handlers.ShowCourierInformationHandler).Methods("GET")
+	courierRouter.HandleFunc("/status/set", handlers.SetStatusCourierHandler).Methods("PUT")
 
 	restaurantsRouter := apiRouter.PathPrefix("/restaurants").Subrouter()
 	restaurantsRouter.HandleFunc("/restaurants/{id}/menu", handlers.RestaurantsMenuHandler).Methods("GET")

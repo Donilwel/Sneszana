@@ -11,7 +11,7 @@ const (
 	WAITING  string = "WAITING"
 )
 
-type Worker struct {
+type Courier struct {
 	ID          uint           `gorm:"primaryKey"`
 	UserID      uint           `gorm:"unique;not null;OnDelete:CASCADE"`
 	User        User           `gorm:"foreignKey:UserID"`

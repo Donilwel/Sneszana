@@ -10,7 +10,7 @@ import (
 )
 
 func ShowAllCouriersHandler(w http.ResponseWriter, r *http.Request) {
-	var couriers []models.Worker
+	var couriers []models.Courier
 	if len(couriers) == 0 {
 		log.Println("not found user with role courier")
 		http.Error(w, "not found user", http.StatusNotFound)
@@ -53,14 +53,14 @@ func SetRolesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if user.Role == models.COURIER_ROLE && (role == models.CUSTOMER_ROLE || role == models.ADMIN_ROLE) {
-		var courier models.Worker
+		var courier models.Courier
 		if err := tx.Where("user_id = ?", user.ID).First(&courier).Error; err != nil {
 			log.Println("error getting courier user")
 			http.Error(w, "error getting courier user", http.StatusBadRequest)
 			tx.Rollback()
 			return
 		}
-		if err := tx.Delete(&courier).Error; err != nil {
+		if err := tx.Unscoped().Delete(&courier).Error; err != nil {
 			log.Println("error deleting courier user")
 			http.Error(w, "error deleting courier user", http.StatusBadRequest)
 			tx.Rollback()
@@ -79,7 +79,8 @@ func SetRolesHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("user role now CUSTOMER_ROLE")
 
 	case models.COURIER_ROLE:
-		if err := tx.Create(&models.Worker{UserID: user.ID}).Error; err != nil {
+		log.Printf("Creating courier for user: %+v", user)
+		if err := tx.Create(&models.Courier{UserID: user.ID}).Error; err != nil {
 
 			log.Println("error creating courier record")
 			http.Error(w, "error creating courier record", http.StatusInternalServerError)

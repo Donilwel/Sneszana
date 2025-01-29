@@ -15,7 +15,7 @@ func main() {
 	config.LoadEnv()
 	migrations.InitDB()
 	r := mux.NewRouter()
-
+	
 	apiRouter := r.PathPrefix("/api").Subrouter()
 	apiRouter.HandleFunc("/ping", handlers.PingHandler).Methods("GET")
 

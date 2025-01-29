@@ -12,7 +12,7 @@ const (
 
 type Courier struct {
 	ID          uint    `gorm:"primaryKey"`
-	UserID      uint    `gorm:"not null;index"`
+	UserID      uint    `gorm:"not null;unique;index"`
 	User        User    `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
 	Vehicle     string  `gorm:"type:varchar(100);not null;default:'NONE'"`
 	Status      string  `gorm:"type:varchar(100);not null;default:'UNACTIVE'"`

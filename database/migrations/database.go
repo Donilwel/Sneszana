@@ -33,6 +33,7 @@ func InitDB() {
 		&models.User{},
 		&models.Courier{},
 		&models.RevokedToken{},
+		//&models.Order{}
 	); err != nil {
 		log.Println("error migrating database")
 		return

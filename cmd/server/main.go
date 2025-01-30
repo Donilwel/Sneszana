@@ -35,8 +35,9 @@ func main() {
 	ordersRouter.HandleFunc("/", handlers.CreateOrderHandler).Methods("POST")
 	ordersRouter.HandleFunc("/{id}", handlers.UpdateOrderHandler).Methods("PUT")
 	ordersRouter.HandleFunc("/{id}", handlers.DeleteOrderHandler).Methods("DELETE")
+	ordersRouter.HandleFunc("/add", handlers.AddToBucketHandler).Methods("POST")
 
-	//оставить отзыв на блюдо может человек который купил когда то этот товар
+	//оставить отзыв на блюдо может человек который купил когда-то этот товар
 	ordersRouter.HandleFunc("/{id}/setReview", handlers.SetReviewHandler).Methods("POST")
 
 	adminRouter := apiRouter.PathPrefix("/admin").Subrouter()
@@ -44,12 +45,15 @@ func main() {
 	adminRouter.HandleFunc("/couriers", handlers.ShowAllCouriersHandler).Methods("GET")
 	adminRouter.HandleFunc("/{id}/courier", handlers.ShowCourierHandler).Methods("GET")
 	adminRouter.HandleFunc("/setRole/{username}", handlers.SetRolesHandler).Methods("PUT")
+	adminRouter.HandleFunc("/dishes/delete", handlers.DeleteDishesHandler).Methods("DELETE")
+	adminRouter.HandleFunc("/dishes/{id}", handlers.ChangePriceHandler).Methods("PUT")
+	adminRouter.HandleFunc("/dishes", handlers.ShowAllDishesHandler).Methods("GET")
 
 	courierRouter := apiRouter.PathPrefix("/courier").Subrouter()
 	courierRouter.Use(utils.AuthMiddleware(models.COURIER_ROLE))
 	courierRouter.HandleFunc("", handlers.ShowCourierInformationHandler).Methods("GET")
 	courierRouter.HandleFunc("/status/set", handlers.SetStatusCourierHandler).Methods("PUT")
-
+	courierRouter.HandleFunc("/orders/show", handlers.GetActuallOrdersHandler).Methods("GET")
 	restaurantsRouter := apiRouter.PathPrefix("/restaurants").Subrouter()
 	restaurantsRouter.HandleFunc("/restaurants/{id}/menu", handlers.RestaurantsMenuHandler).Methods("GET")
 	log.Printf("Server listening on port 8080")

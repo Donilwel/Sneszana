@@ -149,3 +149,61 @@ func ShowCourierHandler(w http.ResponseWriter, r *http.Request) {
 	utils.JSONFormat(w, r, courier)
 	log.Println("courier", courier.ID)
 }
+
+func DeleteDishesHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	tx := migrations.DB.Begin()
+	if err := tx.Exec("DELETE FROM dishes WHERE id = ?", id).Error; err != nil {
+		log.Println("error deleting dishes")
+		http.Error(w, "error deleting dishes", http.StatusInternalServerError)
+		return
+	}
+	tx.Commit()
+	log.Println("dishes deleted successfully")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("dishes deleted successfully"))
+}
+
+func ChangePriceHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		log.Println("error converting id to int")
+		http.Error(w, "error converting id to int", http.StatusBadRequest)
+		return
+	}
+	price := r.URL.Query().Get("price")
+	tx := migrations.DB.Begin()
+	var dish models.Dish
+	if err := tx.Where("id = ?", id).First(&dish).Error; err != nil {
+		log.Println("error fetching dish")
+		http.Error(w, "error fetching dish", http.StatusInternalServerError)
+		return
+	}
+	dish.Price, err = strconv.ParseFloat(price, 64)
+	if err != nil {
+		log.Println("error converting dish to float")
+		http.Error(w, "error converting dish to float", http.StatusBadRequest)
+		return
+	}
+	if err := tx.Save(&dish).Error; err != nil {
+		log.Println("error, dish not updated")
+		http.Error(w, "error dish not updated", http.StatusInternalServerError)
+		return
+	}
+	tx.Commit()
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("dish price updated successfully"))
+
+}
+
+func ShowAllDishesHandler(w http.ResponseWriter, r *http.Request) {
+	var dishes []models.Dish
+	if err := migrations.DB.Find(&dishes).Error; err != nil {
+		log.Println("error fetching dishes")
+		http.Error(w, "error fetching dishes", http.StatusInternalServerError)
+		return
+	}
+	utils.JSONFormat(w, r, dishes)
+	log.Println("dishes fetched successfully")
+}

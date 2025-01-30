@@ -120,3 +120,7 @@ func SetStatusCourierHandler(w http.ResponseWriter, r *http.Request) {
 		"status":   courier.Status,
 	})
 }
+
+func GetActuallOrdersHandler(w http.ResponseWriter, r *http.Request) {
+
+}

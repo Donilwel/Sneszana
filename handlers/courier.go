@@ -55,7 +55,7 @@ func ShowCourierInformationHandler(w http.ResponseWriter, r *http.Request) {
 		case "ordersCount":
 			shower = strconv.Itoa(courier.OrdersCount)
 		case "id":
-			shower = strconv.Itoa(int(courier.ID))
+			shower = courier.ID.String()
 		case "email":
 			shower = courier.User.Email
 		case "phone":

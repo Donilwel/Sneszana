@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"time"
 )
@@ -12,8 +13,8 @@ const (
 )
 
 type Courier struct {
-	ID          uint           `gorm:"primaryKey"`
-	UserID      uint           `gorm:"unique;not null;OnDelete:CASCADE"`
+	ID          uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primary_key"`
+	UserID      uuid.UUID      `gorm:"unique;not null;OnDelete:CASCADE"`
 	User        User           `gorm:"foreignKey:UserID"`
 	Rating      float64        `gorm:"type:decimal(3,2);default:0.0"`
 	Vehicle     string         `gorm:"type:varchar(50);not null;default:'NONE'"`

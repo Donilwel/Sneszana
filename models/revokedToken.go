@@ -1,9 +1,12 @@
 package models
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type RevokedToken struct {
-	ID        uint   `gorm:"primaryKey"`
-	Token     string `gorm:"unique;not null"`
+	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primary_key"`
+	Token     string    `gorm:"unique;not null"`
 	CreatedAt time.Time
 }

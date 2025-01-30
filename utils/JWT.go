@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"log"
 	"net/http"
 	"strings"
@@ -14,7 +15,7 @@ import (
 
 var jwtSecret = []byte("h8hjfdjfd04kfmfdo32nifsdnf3")
 
-func GenerateJWT(userId uint, email string) (string, error) {
+func GenerateJWT(userId uuid.UUID, email string) (string, error) {
 	claims := jwt.MapClaims{
 		"userID": userId,
 		"email":  email,
@@ -89,7 +90,7 @@ func AuthMiddleware(requiredRole string) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), "userID", uint(userID))
+			ctx := context.WithValue(r.Context(), "userID", userID)
 			ctx = context.WithValue(ctx, "role", role)
 			r = r.WithContext(ctx)
 			log.Println("role user is correct")

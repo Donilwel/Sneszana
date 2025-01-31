@@ -4,6 +4,7 @@ import (
 	"Sneszana/database/migrations"
 	"Sneszana/models"
 	"Sneszana/utils"
+	"github.com/google/uuid"
 	"log"
 	"net/http"
 	"strconv"
@@ -28,7 +29,7 @@ var Accepted uint
 //}
 
 func ShowCourierInformationHandler(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value("userID").(uint)
+	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
 		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
 		return

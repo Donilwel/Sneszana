@@ -9,5 +9,5 @@ type Dish struct {
 	Price        float64   `gorm:"type:decimal(10,2);not null"`
 	ImageURL     string    `gorm:"type:varchar(255)"`
 	Ingredients  string    `gorm:"type:text"`
-	RestaurantID uuid.UUID `gorm:"not null"` // Внешний ключ
+	RestaurantID uuid.UUID `gorm:"not null"`
 }

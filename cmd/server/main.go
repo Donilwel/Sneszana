@@ -36,7 +36,7 @@ func main() {
 	ordersRouter.HandleFunc("/", handlers.CreateOrderHandler).Methods("POST")
 	ordersRouter.HandleFunc("/{id}", handlers.UpdateOrderHandler).Methods("PUT")
 	ordersRouter.HandleFunc("/{id}", handlers.DeleteOrderHandler).Methods("DELETE")
-	//ordersRouter.HandleFunc("/add", handlers.AddToBucketHandler).Methods("POST")
+	ordersRouter.HandleFunc("/{id}/add", handlers.AddToBucketHandler).Methods("POST")
 
 	//оставить отзыв на блюдо может человек который купил когда-то этот товар
 	ordersRouter.HandleFunc("/{id}/setReview", handlers.SetReviewHandler).Methods("POST")

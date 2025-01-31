@@ -17,7 +17,7 @@ var jwtSecret = []byte("h8hjfdjfd04kfmfdo32nifsdnf3")
 
 func GenerateJWT(userId uuid.UUID, email string) (string, error) {
 	claims := jwt.MapClaims{
-		"userID": userId,
+		"userID": userId.String(),
 		"email":  email,
 		"exp":    time.Now().Add(time.Hour * 24).Unix(),
 	}
@@ -68,7 +68,7 @@ func AuthMiddleware(requiredRole string) func(http.Handler) http.Handler {
 				return
 			}
 
-			userID, ok := claims["userID"].(float64)
+			userID, ok := claims["userID"].(string)
 			if !ok {
 				log.Println("userID not found in token")
 				http.Error(w, "userID not found in token", http.StatusUnauthorized)
@@ -82,7 +82,7 @@ func AuthMiddleware(requiredRole string) func(http.Handler) http.Handler {
 				return
 			}
 
-			role := string(user.Role)
+			role := user.Role
 
 			if requiredRole != "" && role != requiredRole {
 				log.Println("role mismatch")

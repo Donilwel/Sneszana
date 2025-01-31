@@ -35,7 +35,7 @@ func main() {
 	ordersRouter.HandleFunc("/", handlers.ShowOrderHandler).Methods("GET")
 	ordersRouter.HandleFunc("/", handlers.CreateOrderHandler).Methods("POST")
 	ordersRouter.HandleFunc("/{id}", handlers.UpdateOrderHandler).Methods("PUT")
-	ordersRouter.HandleFunc("/{id}", handlers.DeleteOrderHandler).Methods("DELETE")
+	ordersRouter.HandleFunc("/delete", handlers.DeleteOrderHandler).Methods("DELETE")
 	ordersRouter.HandleFunc("/{id}/add", handlers.AddToBucketHandler).Methods("POST")
 
 	//оставить отзыв на блюдо может человек который купил когда-то этот товар

@@ -133,61 +133,71 @@ func GetActuallOrdersHandler(w http.ResponseWriter, r *http.Request) {
 	utils.JSONFormat(w, r, orders)
 }
 
-func SetCoirierOnOrderHandler(w http.ResponseWriter, r *http.Request) {
-
+func SetCourierOnOrderHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
-		log.Println("Invalid courier ID", http.StatusUnauthorized)
-		http.Error(w, "Invalid courier ID", http.StatusUnauthorized)
+		log.Println("invalid or missing userID", http.StatusUnauthorized)
+		http.Error(w, "invalid or missing userID", http.StatusUnauthorized)
 		return
 	}
 
-	orderId := mux.Vars(r)["orderID"]
-	tx := migrations.DB.Begin()
+	orderID := mux.Vars(r)["orderID"]
 
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-	if err := tx.Error; err != nil {
-		tx.Rollback()
+	tx := migrations.DB.Begin()
+	defer tx.Rollback()
+
+	if tx.Error != nil {
 		log.Println("error, failed to start transaction")
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
+
 	var courier models.Courier
-	if err := migrations.DB.Where("User_id = ?", userID).First(&courier).Error; err != nil {
-		tx.Rollback()
-		log.Println("Courier not found")
-		http.Error(w, "Courier not found", http.StatusNotFound)
+	if err := tx.Where("User_id = ?", userID).First(&courier).Error; err != nil {
+		log.Println("courier not found")
+		http.Error(w, "courier not found", http.StatusNotFound)
 		return
 	}
 
 	var order models.Order
-	if err := tx.Where("id = ?", orderId).First(&order).Error; err != nil {
-		tx.Rollback()
+	if err := tx.Set("gorm:query_option", "FOR UPDATE").Where("id = ?", orderID).First(&order).Error; err != nil {
 		log.Println("order not found")
 		http.Error(w, "order not found", http.StatusNotFound)
 		return
 	}
-	if courier.Status == models.WAITING {
-		order.Status = models.ONTHEWAY
-		order.CourierID = courier.ID
-		courier.Status = models.ACTIVE
-		if err := tx.Save(&order).Error; err != nil {
-			tx.Rollback()
-			log.Println("order save failed")
-			http.Error(w, "internal server error", http.StatusInternalServerError)
-			return
-		}
-		if err := tx.Save(&courier).Error; err != nil {
-			tx.Rollback()
-			log.Println("courier save failed")
-			http.Error(w, "internal server error", http.StatusInternalServerError)
-			return
-		}
+
+	if order.Status != models.WAITFREECOURIER {
+		log.Println("order is already taken")
+		http.Error(w, "order is already taken", http.StatusConflict)
+		return
 	}
-	tx.Commit()
+
+	if courier.Status != models.WAITING {
+		log.Println("courier status is not available")
+		http.Error(w, "courier status is not available. Need courier status = waiting", http.StatusConflict)
+		return
+	}
+
+	order.Status = models.ONTHEWAY
+	order.CourierID = courier.ID
+	courier.Status = models.ACTIVE
+
+	if err := tx.Save(&order).Error; err != nil {
+		log.Println("order save failed")
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	if err := tx.Save(&courier).Error; err != nil {
+		log.Println("courier save failed")
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		log.Println("transaction commit failed")
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	utils.JSONFormat(w, r, order)
 }

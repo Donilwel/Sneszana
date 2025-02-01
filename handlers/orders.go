@@ -225,7 +225,7 @@ func CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var code = generateCode()
 	if err := migrations.DB.Create(&models.Checker{
-		UserID:      userId,
+		OrderID:     order.ID,
 		CodeChecker: code,
 	}).Error; err != nil {
 		tx.Rollback()

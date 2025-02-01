@@ -14,7 +14,6 @@ import (
 func main() {
 	config.LoadEnv()
 	migrations.InitDB()
-
 	r := mux.NewRouter()
 
 	apiRouter := r.PathPrefix("/api").Subrouter()

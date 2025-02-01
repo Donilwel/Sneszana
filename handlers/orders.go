@@ -3,6 +3,7 @@ package handlers
 import (
 	"Sneszana/database/migrations"
 	"Sneszana/models"
+	"Sneszana/utils"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"log"
@@ -10,12 +11,93 @@ import (
 )
 
 func ShowOrderHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte("pong")); err != nil {
-		log.Println("Error, network failed")
+	userId, ok := r.Context().Value("userID").(uuid.UUID)
+	if !ok {
+		log.Println("invalid user ID")
+		http.Error(w, "invalid user ID", http.StatusUnauthorized)
+		return
 	}
+	tx := migrations.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	if err := tx.Error; err != nil {
+		log.Println("error, failed to start transaction")
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	var orders []models.Order
+	if err := tx.Where("user_id = ?", userId).Find(&orders).Error; err != nil {
+		tx.Rollback()
+		log.Println("error, failed to fetch orders")
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	utils.JSONFormat(w, r, orders)
 }
+func ShowInformationAboutOrderHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
 
+	orderIdStr := params["orderId"]
+	if orderIdStr == "" {
+		log.Println("missing order ID")
+		http.Error(w, "missing order ID", http.StatusBadRequest)
+		return
+	}
+
+	orderId, err := uuid.Parse(orderIdStr)
+	if err != nil {
+		log.Println("invalid order ID format")
+		http.Error(w, "invalid order ID format", http.StatusBadRequest)
+		return
+	}
+
+	userId, ok := r.Context().Value("userID").(uuid.UUID)
+	if !ok {
+		log.Println("invalid user ID")
+		http.Error(w, "invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	var order models.Order
+	if err := migrations.DB.Where("user_id = ? AND id = ?", userId, orderId).First(&order).Error; err != nil {
+		log.Println("error, failed to fetch order")
+		http.Error(w, "order not found", http.StatusNotFound)
+		return
+	}
+
+	var orderDishes []models.OrderDish
+	if err := migrations.DB.Where("order_id = ?", order.ID).Find(&orderDishes).Error; err != nil {
+		log.Println("error, failed to fetch dishes")
+		http.Error(w, "dishes not found", http.StatusNotFound)
+		return
+	}
+
+	type OrderDishDetails struct {
+		Count int         `json:"count"`
+		Dish  models.Dish `json:"dish"`
+	}
+
+	var result []OrderDishDetails
+
+	for _, orderDish := range orderDishes {
+		var dish models.Dish
+		if err := migrations.DB.Where("id = ?", orderDish.DishID).First(&dish).Error; err != nil {
+			log.Println("error, failed to fetch dish details")
+			http.Error(w, "dish details not found", http.StatusNotFound)
+			return
+		}
+
+		result = append(result, OrderDishDetails{
+			Count: orderDish.Count,
+			Dish:  dish,
+		})
+	}
+
+	utils.JSONFormat(w, r, result)
+}
 func AddToBucketHandler(w http.ResponseWriter, r *http.Request) {
 	userId, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {

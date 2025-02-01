@@ -33,6 +33,7 @@ func main() {
 	ordersRouter := apiRouter.PathPrefix("/orders").Subrouter()
 	ordersRouter.Use(utils.AuthMiddleware(models.CUSTOMER_ROLE))
 	ordersRouter.HandleFunc("/", handlers.ShowOrderHandler).Methods("GET")
+	ordersRouter.HandleFunc("/{orderId}", handlers.ShowInformationAboutOrderHandler).Methods("GET")
 	ordersRouter.HandleFunc("/", handlers.CreateOrderHandler).Methods("POST")
 	ordersRouter.HandleFunc("/{id}", handlers.UpdateOrderHandler).Methods("PUT")
 	ordersRouter.HandleFunc("/delete", handlers.DeleteOrderHandler).Methods("DELETE")

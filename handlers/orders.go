@@ -7,8 +7,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"log"
+	"math/rand"
 	"net/http"
+	"time"
 )
+
+func generateCode() uint {
+	rand.Seed(time.Now().UnixNano())
+	return uint(100000 + rand.Intn(900000))
+}
 
 func ShowOrderHandler(w http.ResponseWriter, r *http.Request) {
 	userId, ok := r.Context().Value("userID").(uuid.UUID)
@@ -216,11 +223,25 @@ func CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error, failed to update order", http.StatusInternalServerError)
 		return
 	}
+	var code = generateCode()
+	if err := migrations.DB.Create(&models.Checker{
+		UserID:      userId,
+		CodeChecker: code,
+	}).Error; err != nil {
+		tx.Rollback()
+		log.Println("error, failed to create checker")
+		http.Error(w, "error, failed to create checker", http.StatusInternalServerError)
+		return
+	}
 
 	tx.Commit()
 	log.Println("Order start to cook")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Order start to cook"))
+	response := map[string]interface{}{
+		"message": "Order start to cook. your checker code, show it courier for accept finish order",
+		"code":    code,
+	}
+	utils.JSONFormat(w, r, response)
 
 }
 

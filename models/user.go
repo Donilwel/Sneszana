@@ -10,6 +10,7 @@ const (
 	ADMIN_ROLE    string = "ADMIN_ROLE"
 	COURIER_ROLE  string = "COURIER_ROLE"
 	CUSTOMER_ROLE string = "CUSTOMER_ROLE"
+	STAFF_ROLE    string = "COOKER_ROLE"
 )
 
 type User struct {

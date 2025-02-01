@@ -124,4 +124,10 @@ func SetStatusCourierHandler(w http.ResponseWriter, r *http.Request) {
 
 func GetActuallOrdersHandler(w http.ResponseWriter, r *http.Request) {
 
+	var orders []models.Order
+	if err := migrations.DB.Where("status = ?", models.STAFF_ROLE).Find(&orders).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	utils.JSONFormat(w, r, orders)
 }

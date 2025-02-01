@@ -30,6 +30,11 @@ func main() {
 	authRouter.HandleFunc("/login", handlers.LoginHandler).Methods("POST")
 	authRouter.HandleFunc("/logout", handlers.LogoutHandler).Methods("POST")
 
+	kitchenRouter := apiRouter.PathPrefix("/kitchen").Subrouter()
+	//kitchenRouter.Use(utils.AuthMiddleware(models.STAFF_ROLE))
+	kitchenRouter.HandleFunc("/change/{id}", handlers.ChangeStaffStatusOrderHandler).Methods("POST")
+	kitchenRouter.HandleFunc("/showCooking", handlers.ShowCookingOrdersHandler).Methods("GET")
+
 	ordersRouter := apiRouter.PathPrefix("/orders").Subrouter()
 	ordersRouter.Use(utils.AuthMiddleware(models.CUSTOMER_ROLE))
 	ordersRouter.HandleFunc("/", handlers.ShowOrderHandler).Methods("GET")

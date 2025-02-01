@@ -11,7 +11,6 @@ const (
 	COOKING         string = "cooking"
 	WAITFREECOURIER string = "waitfreecourier"
 	ONTHEWAY        string = "ontheway"
-	DELIVERED       string = "delivered"
 	CLOSED          string = "closed"
 )
 

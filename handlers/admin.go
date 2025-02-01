@@ -74,7 +74,7 @@ func SetRolesHandler(w http.ResponseWriter, r *http.Request) {
 		tx.Rollback()
 		return
 	}
-	if user.Role == models.COURIER_ROLE && (role == models.CUSTOMER_ROLE || role == models.ADMIN_ROLE) {
+	if user.Role == models.COURIER_ROLE && (role == models.CUSTOMER_ROLE || role == models.ADMIN_ROLE || role == models.STAFF_ROLE) {
 		var courier models.Courier
 		if err := tx.Where("user_id = ?", user.ID).First(&courier).Error; err != nil {
 			log.Println("error getting courier user")
@@ -99,7 +99,9 @@ func SetRolesHandler(w http.ResponseWriter, r *http.Request) {
 	case models.CUSTOMER_ROLE:
 		user.Role = models.CUSTOMER_ROLE
 		log.Println("user role now CUSTOMER_ROLE")
-
+	case models.STAFF_ROLE:
+		user.Role = models.STAFF_ROLE
+		log.Println("user role now STAFF_ROLE")
 	case models.COURIER_ROLE:
 		log.Printf("Creating courier for user: %+v", user)
 		if err := tx.Create(&models.Courier{UserID: user.ID}).Error; err != nil {

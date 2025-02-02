@@ -201,3 +201,87 @@ func SetCourierOnOrderHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.JSONFormat(w, r, order)
 }
+func SetFinishOrderByCourierHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("userID").(uuid.UUID)
+	if !ok {
+		log.Println("invalid or missing userID", http.StatusUnauthorized)
+		http.Error(w, "invalid or missing userID", http.StatusUnauthorized)
+		return
+	}
+
+	var courier models.Courier
+	var order models.Order
+	tx := migrations.DB.Begin()
+	defer tx.Rollback()
+
+	if err := tx.Where("User_id = ?", userID).First(&courier).Error; err != nil {
+		log.Println("courier not found")
+		http.Error(w, "courier not found", http.StatusNotFound)
+		return
+	}
+
+	if tx.Where("courier_id = ? AND status = ?", courier.ID, models.ONTHEWAY).First(&order).Error != nil {
+		log.Println("order not found")
+		http.Error(w, "order not found", http.StatusNotFound)
+		return
+	}
+
+	log.Println(order.ID)
+
+	var cheker models.Checker
+	if err := tx.Where("order_id = ?", order.ID).First(&cheker).Error; err != nil {
+		log.Println("checker not found")
+		http.Error(w, "checker not found", http.StatusNotFound)
+		return
+	}
+
+	checkCodeStr := r.URL.Query().Get("code")
+	if checkCodeStr == "" {
+		log.Println("checkCode is required")
+		http.Error(w, "checkCode is required", http.StatusBadRequest)
+		return
+	}
+
+	checkCode, err := strconv.ParseUint(checkCodeStr, 10, 32)
+	if err != nil {
+		log.Println("Invalid checkCode format")
+		http.Error(w, "Invalid checkCode format", http.StatusBadRequest)
+		return
+	}
+
+	if uint(checkCode) != cheker.CodeChecker {
+		log.Println("checkCode is invalid")
+		http.Error(w, "checkCode is invalid", http.StatusBadRequest)
+		return
+	}
+
+	order.Status = models.CLOSED
+	courier.Status = models.WAITING
+	courier.OrdersCount += 1
+
+	if err := tx.Save(&order).Error; err != nil {
+		log.Println("order save failed")
+		http.Error(w, "order save failed", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Save(&courier).Error; err != nil {
+		log.Println("courier save failed")
+		http.Error(w, "courier save failed", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Delete(&cheker).Error; err != nil {
+		log.Println("failed to delete checker")
+		http.Error(w, "failed to delete checker", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		log.Println("Transaction commit failed")
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	utils.JSONFormat(w, r, order)
+}

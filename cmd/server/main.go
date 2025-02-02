@@ -15,7 +15,6 @@ func main() {
 	config.LoadEnv()
 	migrations.InitDB()
 	r := mux.NewRouter()
-
 	apiRouter := r.PathPrefix("/api").Subrouter()
 	apiRouter.HandleFunc("/ping", handlers.PingHandler).Methods("GET")
 
@@ -42,6 +41,7 @@ func main() {
 	ordersRouter.HandleFunc("/{id}", handlers.UpdateOrderHandler).Methods("PUT")
 	ordersRouter.HandleFunc("/delete", handlers.DeleteOrderHandler).Methods("DELETE")
 	ordersRouter.HandleFunc("/{id}/add", handlers.AddToBucketHandler).Methods("POST")
+	ordersRouter.HandleFunc("/{id}/review", handlers.DishHandler).Methods("POST")
 
 	//оставить отзыв на блюдо может человек который купил когда-то этот товар
 	ordersRouter.HandleFunc("/{id}/setReview", handlers.SetReviewHandler).Methods("POST")
@@ -61,8 +61,11 @@ func main() {
 	courierRouter.HandleFunc("/status/set", handlers.SetStatusCourierHandler).Methods("PUT")
 	courierRouter.HandleFunc("/orders", handlers.GetActuallOrdersHandler).Methods("GET")
 	courierRouter.HandleFunc("/orders/{orderID}", handlers.SetCourierOnOrderHandler).Methods("POST")
+	courierRouter.HandleFunc("/orders/setStatus", handlers.SetFinishOrderByCourierHandler).Methods("PUT")
+
 	restaurantsRouter := apiRouter.PathPrefix("/restaurants").Subrouter()
-	restaurantsRouter.HandleFunc("/restaurants/{id}/menu", handlers.RestaurantsMenuHandler).Methods("GET")
+	restaurantsRouter.HandleFunc("/menu", handlers.RestaurantsMenuHandler).Methods("GET")
+	restaurantsRouter.HandleFunc("/menu/{id}", handlers.DishHandler).Methods("GET")
 	log.Printf("Server listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }

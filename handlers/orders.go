@@ -4,6 +4,7 @@ import (
 	"Sneszana/database/migrations"
 	"Sneszana/models"
 	"Sneszana/utils"
+	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"log"
@@ -195,6 +196,19 @@ func CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid user ID", http.StatusUnauthorized)
 		return
 	}
+	var address models.Address
+	if err := json.NewDecoder(r.Body).Decode(&address); err != nil {
+		http.Error(w, "error. write incorrect information", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	if address.DomophoneCode == "" || address.HouseNumber == "" || address.Phone == "" || address.Street == "" || address.Apartment == "" {
+		log.Println("invalid address")
+		http.Error(w, "error. write incorrect information", http.StatusBadRequest)
+		return
+	}
+
 	var order models.Order
 	tx := migrations.DB.Begin()
 
@@ -215,7 +229,7 @@ func CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error, failed to find created order by current user", http.StatusNotFound)
 		return
 	}
-
+	address.OrderID = order.ID
 	order.Status = models.COOKING
 	if err := tx.Save(&order).Error; err != nil {
 		tx.Rollback()
@@ -233,7 +247,12 @@ func CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error, failed to create checker", http.StatusInternalServerError)
 		return
 	}
-
+	if err := tx.Create(&address).Error; err != nil {
+		tx.Rollback()
+		log.Println("error, failed to create address")
+		http.Error(w, "error, failed to create address", http.StatusInternalServerError)
+		return
+	}
 	tx.Commit()
 	log.Println("Order start to cook")
 	w.WriteHeader(http.StatusOK)

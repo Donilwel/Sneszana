@@ -193,14 +193,22 @@ func SetCourierOnOrderHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var address models.Address
+	if err := tx.Where("order_id = ?", order.ID).First(&address).Error; err != nil {
+		log.Println("address not found")
+		http.Error(w, "address not found", http.StatusNotFound)
+		return
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		log.Println("transaction commit failed")
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
-
 	utils.JSONFormat(w, r, order)
+	utils.JSONFormat(w, r, address)
 }
+
 func SetFinishOrderByCourierHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {

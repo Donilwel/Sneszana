@@ -63,7 +63,7 @@ func main() {
 	courierRouter.HandleFunc("/orders/{orderID}", handlers.SetCourierOnOrderHandler).Methods("POST")
 	courierRouter.HandleFunc("/orders/setStatus", handlers.SetFinishOrderByCourierHandler).Methods("PUT")
 
-	restaurantsRouter := apiRouter.PathPrefix("/restaurants").Subrouter()
+	restaurantsRouter := apiRouter.PathPrefix("/c").Subrouter()
 	restaurantsRouter.HandleFunc("/menu", handlers.RestaurantsMenuHandler).Methods("GET")
 	restaurantsRouter.HandleFunc("/menu/{id}", handlers.DishHandler).Methods("GET")
 	log.Printf("Server listening on port 8080")

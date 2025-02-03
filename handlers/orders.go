@@ -10,6 +10,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -319,6 +320,89 @@ func DeleteOrderHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Order deleted successfully"))
 }
 
-func SetReviewHandler(w http.ResponseWriter, r *http.Request) {
+func SetReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
+	userId := r.Context().Value("userID").(uuid.UUID)
 
+	var user models.User
+	if err := migrations.DB.Where("id = ?", userId).First(&user).Error; err != nil {
+		log.Println("error, failed to find user")
+		http.Error(w, "error, failed to find user", http.StatusNotFound)
+		return
+	}
+
+	dishID, err := uuid.Parse(mux.Vars(r)["id"])
+	if err != nil {
+		log.Println("error converting id to uuid")
+		http.Error(w, "error converting id to uuid", http.StatusBadRequest)
+		return
+	}
+
+	var dish models.Dish
+	if err := migrations.DB.Where("id = ?", dishID).First(&dish).Error; err != nil {
+		log.Println("error, failed to find dish")
+		http.Error(w, "error, failed to find dish", http.StatusNotFound)
+		return
+	}
+
+	var review models.Review
+	if err := json.NewDecoder(r.Body).Decode(&review); err != nil {
+		log.Println("error, failed to decode review")
+		http.Error(w, "error, failed to decode review", http.StatusBadRequest)
+		return
+	}
+
+	if review.Mark < 1 || review.Mark > 5 {
+		log.Println("error, mark must be between 1 and 5")
+		http.Error(w, "error, mark must be between 1 and 5", http.StatusBadRequest)
+		return
+	}
+
+	review.TextMessage = strings.TrimSpace(review.TextMessage)
+	if review.TextMessage == "" {
+		log.Println("error. write incorrect information")
+		http.Error(w, "error. write incorrect information", http.StatusBadRequest)
+		return
+	}
+
+	tx := migrations.DB.Begin()
+	defer tx.Rollback()
+
+	review.DishID = dish.ID
+
+	var count int64
+	err = tx.Table("order_dishes").
+		Joins("JOIN orders ON orders.id = order_dishes.order_id").
+		Where("orders.user_id = ? AND orders.status = ? AND order_dishes.dish_id = ?", userId, models.CLOSED, review.DishID).
+		Count(&count).Error
+
+	if err != nil || count == 0 {
+		log.Println("user never ordered this dish")
+		http.Error(w, "user never ordered this dish", http.StatusForbidden)
+		return
+	}
+
+	var existingReview models.Review
+	if err := tx.Where("user_id = ? AND dish_id = ?", userId, review.DishID).First(&existingReview).Error; err == nil {
+		log.Println("error, review already exists for this dish")
+		http.Error(w, "error, review already exists for this dish", http.StatusConflict)
+		return
+	}
+
+	review.UserID = userId
+	if err := tx.Create(&review).Error; err != nil {
+		log.Println("error, failed to create review")
+		http.Error(w, "error, failed to create review", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		log.Println("transaction commit failed")
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	utils.JSONFormat(w, r, map[string]interface{}{
+		"text_user":      "now your review on cheking by admin",
+		"dish":           dish.Name,
+		"review_message": review.TextMessage,
+		"mark":           review.Mark})
 }

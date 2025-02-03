@@ -15,6 +15,7 @@ func main() {
 	config.LoadEnv()
 	migrations.InitDB()
 	r := mux.NewRouter()
+
 	apiRouter := r.PathPrefix("/api").Subrouter()
 	apiRouter.HandleFunc("/ping", handlers.PingHandler).Methods("GET")
 
@@ -42,9 +43,10 @@ func main() {
 	ordersRouter.HandleFunc("/delete", handlers.DeleteOrderHandler).Methods("DELETE")
 	ordersRouter.HandleFunc("/{id}/add", handlers.AddToBucketHandler).Methods("POST")
 	ordersRouter.HandleFunc("/{id}/review", handlers.DishHandler).Methods("POST")
+	//ordersRouter.HandleFunc("/reviews/courier/{id}", handlers.SetReviewOnCourierHandler).Methods("POST")
 
 	//оставить отзыв на блюдо может человек который купил когда-то этот товар
-	ordersRouter.HandleFunc("/{id}/setReview", handlers.SetReviewHandler).Methods("POST")
+	ordersRouter.HandleFunc("/reviews/dish/{id}", handlers.SetReviewOnDishHandler).Methods("POST")
 
 	adminRouter := apiRouter.PathPrefix("/admin").Subrouter()
 	adminRouter.Use(utils.AuthMiddleware(models.ADMIN_ROLE))
@@ -63,7 +65,7 @@ func main() {
 	courierRouter.HandleFunc("/orders/{orderID}", handlers.SetCourierOnOrderHandler).Methods("POST")
 	courierRouter.HandleFunc("/orders/setStatus", handlers.SetFinishOrderByCourierHandler).Methods("PUT")
 
-	restaurantsRouter := apiRouter.PathPrefix("/c").Subrouter()
+	restaurantsRouter := apiRouter.PathPrefix("/restaurants").Subrouter()
 	restaurantsRouter.HandleFunc("/menu", handlers.RestaurantsMenuHandler).Methods("GET")
 	restaurantsRouter.HandleFunc("/menu/{id}", handlers.DishHandler).Methods("GET")
 	log.Printf("Server listening on port 8080")

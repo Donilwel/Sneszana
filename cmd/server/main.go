@@ -38,11 +38,9 @@ func main() {
 	ordersRouter.Use(utils.AuthMiddleware(models.CUSTOMER_ROLE))
 	ordersRouter.HandleFunc("/", handlers.ShowOrderHandler).Methods("GET")
 	ordersRouter.HandleFunc("/", handlers.CreateOrderHandler).Methods("POST")
-	ordersRouter.HandleFunc("/{id}", handlers.UpdateOrderHandler).Methods("PUT")
-	ordersRouter.HandleFunc("/add/{id}", handlers.AddToBucketHandler).Methods("POST")
 	ordersRouter.HandleFunc("/{orderId}", handlers.ShowInformationAboutOrderHandler).Methods("GET")
+	ordersRouter.HandleFunc("/add/{id}", handlers.AddToBucketHandler).Methods("POST")
 	ordersRouter.HandleFunc("/delete", handlers.DeleteOrderHandler).Methods("DELETE")
-	ordersRouter.HandleFunc("/review/{id}", handlers.DishHandler).Methods("POST")
 	//ordersRouter.HandleFunc("/reviews/courier/{id}", handlers.SetReviewOnCourierHandler).Methods("POST")
 
 	//оставить отзыв на блюдо может человек который купил когда-то этот товар

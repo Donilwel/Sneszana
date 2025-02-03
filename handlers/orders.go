@@ -48,9 +48,7 @@ func ShowOrderHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ShowInformationAboutOrderHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-
-	orderIdStr := params["orderId"]
+	orderIdStr := mux.Vars(r)["orderId"]
 	if orderIdStr == "" {
 		log.Println("missing order ID")
 		http.Error(w, "missing order ID", http.StatusBadRequest)
@@ -106,7 +104,10 @@ func ShowInformationAboutOrderHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	utils.JSONFormat(w, r, result)
+	utils.JSONFormat(w, r, map[string]interface{}{
+		"all dishes":  result,
+		"total price": order.Price,
+	})
 }
 
 func AddToBucketHandler(w http.ResponseWriter, r *http.Request) {
@@ -267,10 +268,6 @@ func CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func UpdateOrderHandler(writer http.ResponseWriter, request *http.Request) {
-
-}
-
 func DeleteOrderHandler(w http.ResponseWriter, r *http.Request) {
 	userId, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
@@ -280,11 +277,6 @@ func DeleteOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tx := migrations.DB.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
 	defer tx.Rollback()
 
 	if tx.Error != nil {

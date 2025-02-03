@@ -4,6 +4,7 @@ import (
 	"Sneszana/database/migrations"
 	"Sneszana/models"
 	"Sneszana/utils"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -48,16 +49,11 @@ func SetRolesHandler(w http.ResponseWriter, r *http.Request) {
 	username := params["username"]
 
 	tx := migrations.DB.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
+	defer tx.Rollback()
 
 	if err := tx.Where("name = ?", username).First(&user).Error; err != nil {
 		log.Println("user not exist")
 		http.Error(w, "user not exist", http.StatusBadRequest)
-		tx.Rollback()
 		return
 	}
 
@@ -65,13 +61,11 @@ func SetRolesHandler(w http.ResponseWriter, r *http.Request) {
 	if role == "" {
 		log.Println("role is required")
 		http.Error(w, "role is required", http.StatusBadRequest)
-		tx.Rollback()
 		return
 	}
 	if user.Role == role {
 		log.Printf("user with role %s already has the role %s", username, role)
 		http.Error(w, "role already has the role "+role, http.StatusBadRequest)
-		tx.Rollback()
 		return
 	}
 	if user.Role == models.COURIER_ROLE && (role == models.CUSTOMER_ROLE || role == models.ADMIN_ROLE || role == models.STAFF_ROLE) {
@@ -79,13 +73,11 @@ func SetRolesHandler(w http.ResponseWriter, r *http.Request) {
 		if err := tx.Where("user_id = ?", user.ID).First(&courier).Error; err != nil {
 			log.Println("error getting courier user")
 			http.Error(w, "error getting courier user", http.StatusBadRequest)
-			tx.Rollback()
 			return
 		}
 		if err := tx.Unscoped().Delete(&courier).Error; err != nil {
 			log.Println("error deleting courier user")
 			http.Error(w, "error deleting courier user", http.StatusBadRequest)
-			tx.Rollback()
 			return
 		}
 		log.Println("courier user is deleted")
@@ -108,7 +100,6 @@ func SetRolesHandler(w http.ResponseWriter, r *http.Request) {
 
 			log.Println("error creating courier record")
 			http.Error(w, "error creating courier record", http.StatusInternalServerError)
-			tx.Rollback()
 			return
 		}
 		log.Println("courier database is created")
@@ -118,14 +109,12 @@ func SetRolesHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		log.Println("role not exist")
 		http.Error(w, "role not exist", http.StatusBadRequest)
-		tx.Rollback()
 		return
 	}
 
 	if err := tx.Save(&user).Error; err != nil {
 		log.Println("error, user role not uploaded in database")
 		http.Error(w, "user not uploaded in database", http.StatusBadRequest)
-		tx.Rollback()
 		return
 	}
 
@@ -135,11 +124,10 @@ func SetRolesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ShowCourierHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id, err := strconv.Atoi(params["id"])
+	id, err := uuid.Parse(mux.Vars(r)["id"])
 	if err != nil {
-		log.Println("error converting id to int")
-		http.Error(w, "error converting id to int", http.StatusBadRequest)
+		log.Println("error converting id to UUID")
+		http.Error(w, "error converting id to UUID", http.StatusBadRequest)
 		return
 	}
 	var courier models.Courier
@@ -167,36 +155,48 @@ func DeleteDishesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ChangePriceHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id, err := strconv.Atoi(params["id"])
+	id, err := uuid.Parse(mux.Vars(r)["id"])
 	if err != nil {
-		log.Println("error converting id to int")
-		http.Error(w, "error converting id to int", http.StatusBadRequest)
+		log.Println("error converting id to UUID")
+		http.Error(w, "error converting id to UUID", http.StatusBadRequest)
 		return
 	}
+
 	price := r.URL.Query().Get("price")
+	newPrice, err := strconv.ParseFloat(price, 64)
+	if err != nil {
+		log.Println("error converting price to float")
+		http.Error(w, "error converting price to float", http.StatusBadRequest)
+		return
+	}
+
 	tx := migrations.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	var dish models.Dish
-	if err := tx.Where("id = ?", id).First(&dish).Error; err != nil {
+	if err := tx.Raw("SELECT * FROM dishes WHERE id = ? FOR UPDATE", id).Scan(&dish).Error; err != nil {
 		log.Println("error fetching dish")
+		tx.Rollback()
 		http.Error(w, "error fetching dish", http.StatusInternalServerError)
 		return
 	}
-	dish.Price, err = strconv.ParseFloat(price, 64)
-	if err != nil {
-		log.Println("error converting dish to float")
-		http.Error(w, "error converting dish to float", http.StatusBadRequest)
-		return
-	}
+
+	dish.Price = newPrice
+
 	if err := tx.Save(&dish).Error; err != nil {
 		log.Println("error, dish not updated")
+		tx.Rollback()
 		http.Error(w, "error dish not updated", http.StatusInternalServerError)
 		return
 	}
+
 	tx.Commit()
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("dish price updated successfully"))
-
 }
 
 func ShowAllDishesHandler(w http.ResponseWriter, r *http.Request) {

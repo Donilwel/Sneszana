@@ -13,5 +13,5 @@ type Review struct {
 	DishID      uuid.UUID `gorm:"type:uuid;not null;constraint:OnDelete:CASCADE"`
 	TextMessage string    `gorm:"type:text;not null" json:"text_message"`
 	Mark        uint      `gorm:"not null;default:0;check:mark BETWEEN 1 AND 5" json:"mark"`
-	Status      string    `gorm:"type:text;not null,default=checking"`
+	Status      string    `gorm:"type:text;not null;default:'checking'" json:"status"`
 }

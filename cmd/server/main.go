@@ -47,6 +47,7 @@ func main() {
 
 	//оставить отзыв на блюдо может человек который купил когда-то этот товар
 	ordersRouter.HandleFunc("/reviews/dish/{id}", handlers.SetReviewOnDishHandler).Methods("POST")
+	ordersRouter.HandleFunc("/reviews/dish/{id}", handlers.ShowReviewOnDishHandler).Methods("GET")
 
 	adminRouter := apiRouter.PathPrefix("/admin").Subrouter()
 	adminRouter.Use(utils.AuthMiddleware(models.ADMIN_ROLE))
@@ -56,6 +57,8 @@ func main() {
 	adminRouter.HandleFunc("/dishes/delete", handlers.DeleteDishesHandler).Methods("DELETE")
 	adminRouter.HandleFunc("/dishes/{id}", handlers.ChangePriceHandler).Methods("PUT")
 	adminRouter.HandleFunc("/dishes", handlers.ShowAllDishesHandler).Methods("GET")
+	adminRouter.HandleFunc("/reviews", handlers.ShowReviewsStatusHandler).Methods("GET")
+	adminRouter.HandleFunc("/reviews/{id}", handlers.ChangeReviewsStatusHandler).Methods("PUT")
 
 	courierRouter := apiRouter.PathPrefix("/courier").Subrouter()
 	courierRouter.Use(utils.AuthMiddleware(models.COURIER_ROLE))

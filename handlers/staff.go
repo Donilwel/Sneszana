@@ -19,6 +19,7 @@ func ShowCookingOrdersHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("successfully show cooking orders")
 	utils.JSONFormat(w, r, orders)
 }
+
 func ChangeStaffStatusOrderHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	orderId := params["id"]

@@ -209,3 +209,16 @@ func ShowAllDishesHandler(w http.ResponseWriter, r *http.Request) {
 	utils.JSONFormat(w, r, dishes)
 	log.Println("dishes fetched successfully")
 }
+
+func ShowReviewsStatusHandler(w http.ResponseWriter, r *http.Request) {
+	var reviews []models.Review
+	if err := migrations.DB.Where("status = ?", models.CHECK).Find(&reviews).Error; err != nil {
+		log.Println("error fetching reviews")
+		http.Error(w, "error fetching reviews", http.StatusInternalServerError)
+		return
+	}
+	utils.JSONFormat(w, r, reviews)
+}
+func ChangeReviewsStatusHandler(w http.ResponseWriter, r *http.Request) {
+
+}

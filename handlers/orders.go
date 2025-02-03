@@ -46,6 +46,7 @@ func ShowOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.JSONFormat(w, r, orders)
 }
+
 func ShowInformationAboutOrderHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
@@ -107,6 +108,7 @@ func ShowInformationAboutOrderHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.JSONFormat(w, r, result)
 }
+
 func AddToBucketHandler(w http.ResponseWriter, r *http.Request) {
 	userId, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
@@ -320,6 +322,28 @@ func DeleteOrderHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Order deleted successfully"))
 }
 
+func ShowReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
+	dishID, err := uuid.Parse(mux.Vars(r)["id"])
+	if err != nil {
+		log.Println("error converting id to uuid")
+		http.Error(w, "error converting id to uuid", http.StatusBadRequest)
+		return
+	}
+	var dish models.Dish
+	if err := migrations.DB.Where("id = ?", dishID).First(&dish).Error; err != nil {
+		log.Println("error, failed to find dish")
+		http.Error(w, "error, failed to find dish", http.StatusNotFound)
+		return
+	}
+	var reviews []models.Review
+	if err := migrations.DB.Where("dish_id = ? AND status = ?", dish.ID, models.ACCEPT).Find(&reviews).Error; err != nil {
+		log.Println("error, failed to find reviews")
+		http.Error(w, "error, failed to find reviews", http.StatusNotFound)
+		return
+	}
+	utils.JSONFormat(w, r, reviews)
+}
+
 func SetReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value("userID").(uuid.UUID)
 
@@ -389,6 +413,7 @@ func SetReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	review.UserID = userId
+	review.Status = models.CHECK
 	if err := tx.Create(&review).Error; err != nil {
 		log.Println("error, failed to create review")
 		http.Error(w, "error, failed to create review", http.StatusInternalServerError)

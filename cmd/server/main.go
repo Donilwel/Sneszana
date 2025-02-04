@@ -4,6 +4,7 @@ import (
 	"Sneszana/config"
 	"Sneszana/database/migrations"
 	"Sneszana/handlers"
+	"Sneszana/logging"
 	"Sneszana/models"
 	"Sneszana/utils"
 	"github.com/gorilla/mux"
@@ -15,6 +16,9 @@ func main() {
 	config.LoadEnv()
 	migrations.InitDB()
 	r := mux.NewRouter()
+
+	logging.InitLogging()
+	logging.Log.Info("Сервер запущен успешно")
 
 	apiRouter := r.PathPrefix("/api").Subrouter()
 	apiRouter.HandleFunc("/ping", handlers.PingHandler).Methods("GET")
@@ -51,11 +55,12 @@ func main() {
 	adminRouter.Use(utils.AuthMiddleware(models.ADMIN_ROLE))
 	adminRouter.HandleFunc("/couriers", handlers.ShowAllCouriersHandler).Methods("GET")
 	adminRouter.HandleFunc("/couriers/{id}", handlers.ShowCourierHandler).Methods("GET")
-	adminRouter.HandleFunc("/setRole/{username}", handlers.SetRolesHandler).Methods("PUT")
+	adminRouter.HandleFunc("/users", handlers.ShowAllUsersHandler).Methods("GET")
+	adminRouter.HandleFunc("/users/{username}", handlers.SetRolesHandler).Methods("PUT")
 	adminRouter.HandleFunc("/dishes", handlers.ShowAllDishesHandler).Methods("GET")
 	adminRouter.HandleFunc("/dishes/{id}", handlers.ChangePriceHandler).Methods("PUT")
 	adminRouter.HandleFunc("/dishes/delete", handlers.DeleteDishesHandler).Methods("DELETE")
-	adminRouter.HandleFunc("/reviews", handlers.ShowReviewsStatusHandler).Methods("GET")
+	//adminRouter.HandleFunc("/reviews", handlers.ShowReviewsStatusHandler).Methods("GET")
 	adminRouter.HandleFunc("/reviews/{id}", handlers.ChangeReviewsStatusHandler).Methods("PUT")
 
 	courierRouter := apiRouter.PathPrefix("/courier").Subrouter()

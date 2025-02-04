@@ -1,0 +1,10 @@
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-04T14:56:19Z"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-04T15:07:09Z"}
+{"count":3,"level":"info","msg":"Users retrieved successfully","time":"2025-02-04T15:07:18Z"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-04T15:23:02Z"}
+{"fields.time":"1.934688ms","level":"info","method":"GET","msg":"Users retrieved successfully","path":"/api/admin/users","status":200,"time":"2025-02-04T15:23:04Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"5.399772ms","level":"info","method":"GET","msg":"Couriers retrieved successfully","path":"/api/admin/couriers","status":200,"time":"2025-02-04T15:23:29Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-04T15:33:57Z"}
+{"fields.time":"2.383435ms","level":"warning","method":"PUT","msg":"User already has this role","path":"/api/admin/users/Darya","status":400,"time":"2025-02-04T15:34:06Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-04T15:44:09Z"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-04T15:44:32Z"}

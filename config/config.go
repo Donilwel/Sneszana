@@ -1,12 +1,14 @@
 package config
 
 import (
+	"Sneszana/logging"
 	"github.com/joho/godotenv"
-	"log"
 )
 
 func LoadEnv() {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Ошибка загрузки .env файла")
+		logging.Log.WithError(err).Fatal("Ошибка загрузки .env файла")
+	} else {
+		logging.Log.Info(".env файл успешно загружен")
 	}
 }

@@ -1,11 +1,11 @@
 package migrations
 
 import (
+	"Sneszana/logging"
 	"Sneszana/models"
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 	"os"
 )
 
@@ -24,7 +24,7 @@ func InitDB() {
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("failed to connect to PostgreSQL database: %v", err)
+		logging.Log.WithError(err).Fatal("Failed to connect to PostgreSQL database")
 	}
 
 	if err := DB.AutoMigrate(
@@ -39,8 +39,8 @@ func InitDB() {
 		&models.Address{},
 		&models.Review{},
 	); err != nil {
-		log.Println("error migrating database")
+		logging.Log.WithError(err).Fatal("Failed to migrate database")
 		return
 	}
-	log.Println("database migrated successfully")
+	logging.Log.Info("database migrated successfully")
 }

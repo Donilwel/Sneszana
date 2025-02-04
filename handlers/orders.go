@@ -110,6 +110,103 @@ func ShowInformationAboutOrderHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func ShowReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
+	dishID, err := uuid.Parse(mux.Vars(r)["id"])
+	if err != nil {
+		log.Println("error converting id to uuid")
+		http.Error(w, "error converting id to uuid", http.StatusBadRequest)
+		return
+	}
+	var dish models.Dish
+	if err := migrations.DB.Where("id = ?", dishID).First(&dish).Error; err != nil {
+		log.Println("error, failed to find dish")
+		http.Error(w, "error, failed to find dish", http.StatusNotFound)
+		return
+	}
+	var reviews []models.Review
+	if err := migrations.DB.Where("dish_id = ? AND status = ?", dish.ID, models.ACCEPT).Find(&reviews).Error; err != nil {
+		log.Println("error, failed to find reviews")
+		http.Error(w, "error, failed to find reviews", http.StatusNotFound)
+		return
+	}
+	utils.JSONFormat(w, r, reviews)
+}
+
+func CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
+	userId, ok := r.Context().Value("userID").(uuid.UUID)
+	if !ok {
+		log.Println("invalid user ID")
+		http.Error(w, "invalid user ID", http.StatusUnauthorized)
+		return
+	}
+	var address models.Address
+	if err := json.NewDecoder(r.Body).Decode(&address); err != nil {
+		http.Error(w, "error. write incorrect information", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	if address.DomophoneCode == "" || address.HouseNumber == "" || address.Phone == "" || address.Street == "" || address.Apartment == "" {
+		log.Println("invalid address")
+		http.Error(w, "error. write incorrect information", http.StatusBadRequest)
+		return
+	}
+
+	var order models.Order
+	tx := migrations.DB.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	if err := tx.Error; err != nil {
+		log.Println("error, failed to start transaction")
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Where("user_ID = ? AND status = 'created'", userId).First(&order).Error; err != nil {
+		tx.Rollback()
+		log.Println("error, failed to find created order by current user")
+		http.Error(w, "error, failed to find created order by current user", http.StatusNotFound)
+		return
+	}
+	address.OrderID = order.ID
+	order.Status = models.COOKING
+	if err := tx.Save(&order).Error; err != nil {
+		tx.Rollback()
+		log.Println("error, failed to update order")
+		http.Error(w, "error, failed to update order", http.StatusInternalServerError)
+		return
+	}
+	var code = generateCode()
+	if err := migrations.DB.Create(&models.Checker{
+		OrderID:     order.ID,
+		CodeChecker: code,
+	}).Error; err != nil {
+		tx.Rollback()
+		log.Println("error, failed to create checker")
+		http.Error(w, "error, failed to create checker", http.StatusInternalServerError)
+		return
+	}
+	if err := tx.Create(&address).Error; err != nil {
+		tx.Rollback()
+		log.Println("error, failed to create address")
+		http.Error(w, "error, failed to create address", http.StatusInternalServerError)
+		return
+	}
+	tx.Commit()
+	log.Println("Order start to cook")
+	w.WriteHeader(http.StatusOK)
+	response := map[string]interface{}{
+		"message": "Order start to cook. your checker code, show it courier for accept finish order",
+		"code":    code,
+	}
+	utils.JSONFormat(w, r, response)
+
+}
+
 func AddToBucketHandler(w http.ResponseWriter, r *http.Request) {
 	userId, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
@@ -191,149 +288,6 @@ func AddToBucketHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Dish added to bucket successfully"))
-}
-
-func CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
-	userId, ok := r.Context().Value("userID").(uuid.UUID)
-	if !ok {
-		log.Println("invalid user ID")
-		http.Error(w, "invalid user ID", http.StatusUnauthorized)
-		return
-	}
-	var address models.Address
-	if err := json.NewDecoder(r.Body).Decode(&address); err != nil {
-		http.Error(w, "error. write incorrect information", http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
-
-	if address.DomophoneCode == "" || address.HouseNumber == "" || address.Phone == "" || address.Street == "" || address.Apartment == "" {
-		log.Println("invalid address")
-		http.Error(w, "error. write incorrect information", http.StatusBadRequest)
-		return
-	}
-
-	var order models.Order
-	tx := migrations.DB.Begin()
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-	if err := tx.Error; err != nil {
-		log.Println("error, failed to start transaction")
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	if err := tx.Where("user_ID = ? AND status = 'created'", userId).First(&order).Error; err != nil {
-		tx.Rollback()
-		log.Println("error, failed to find created order by current user")
-		http.Error(w, "error, failed to find created order by current user", http.StatusNotFound)
-		return
-	}
-	address.OrderID = order.ID
-	order.Status = models.COOKING
-	if err := tx.Save(&order).Error; err != nil {
-		tx.Rollback()
-		log.Println("error, failed to update order")
-		http.Error(w, "error, failed to update order", http.StatusInternalServerError)
-		return
-	}
-	var code = generateCode()
-	if err := migrations.DB.Create(&models.Checker{
-		OrderID:     order.ID,
-		CodeChecker: code,
-	}).Error; err != nil {
-		tx.Rollback()
-		log.Println("error, failed to create checker")
-		http.Error(w, "error, failed to create checker", http.StatusInternalServerError)
-		return
-	}
-	if err := tx.Create(&address).Error; err != nil {
-		tx.Rollback()
-		log.Println("error, failed to create address")
-		http.Error(w, "error, failed to create address", http.StatusInternalServerError)
-		return
-	}
-	tx.Commit()
-	log.Println("Order start to cook")
-	w.WriteHeader(http.StatusOK)
-	response := map[string]interface{}{
-		"message": "Order start to cook. your checker code, show it courier for accept finish order",
-		"code":    code,
-	}
-	utils.JSONFormat(w, r, response)
-
-}
-
-func DeleteOrderHandler(w http.ResponseWriter, r *http.Request) {
-	userId, ok := r.Context().Value("userID").(uuid.UUID)
-	if !ok {
-		log.Println("invalid user ID")
-		http.Error(w, "invalid user ID", http.StatusUnauthorized)
-		return
-	}
-
-	tx := migrations.DB.Begin()
-	defer tx.Rollback()
-
-	if tx.Error != nil {
-		log.Println("error, failed to start transaction")
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	var order models.Order
-	if err := tx.Where("user_id = ? AND status = 'created'", userId).First(&order).Error; err != nil {
-		log.Println("error, failed to find order")
-		http.Error(w, "error, failed to find order", http.StatusNotFound)
-		return
-	}
-
-	if err := tx.Where("order_id = ?", order.ID).Delete(&models.OrderDish{}).Error; err != nil {
-		log.Println("error, failed to delete order dishes")
-		http.Error(w, "error, failed to delete order dishes", http.StatusInternalServerError)
-		return
-	}
-
-	if err := tx.Delete(&order).Error; err != nil {
-		log.Println("error, failed to delete order")
-		http.Error(w, "error, failed to delete order", http.StatusInternalServerError)
-		return
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		log.Println("error, failed to commit transaction")
-		http.Error(w, "error, failed to commit transaction", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Order deleted successfully"))
-}
-
-func ShowReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
-	dishID, err := uuid.Parse(mux.Vars(r)["id"])
-	if err != nil {
-		log.Println("error converting id to uuid")
-		http.Error(w, "error converting id to uuid", http.StatusBadRequest)
-		return
-	}
-	var dish models.Dish
-	if err := migrations.DB.Where("id = ?", dishID).First(&dish).Error; err != nil {
-		log.Println("error, failed to find dish")
-		http.Error(w, "error, failed to find dish", http.StatusNotFound)
-		return
-	}
-	var reviews []models.Review
-	if err := migrations.DB.Where("dish_id = ? AND status = ?", dish.ID, models.ACCEPT).Find(&reviews).Error; err != nil {
-		log.Println("error, failed to find reviews")
-		http.Error(w, "error, failed to find reviews", http.StatusNotFound)
-		return
-	}
-	utils.JSONFormat(w, r, reviews)
 }
 
 func SetReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
@@ -422,4 +376,50 @@ func SetReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
 		"dish":           dish.Name,
 		"review_message": review.TextMessage,
 		"mark":           review.Mark})
+}
+
+func DeleteOrderHandler(w http.ResponseWriter, r *http.Request) {
+	userId, ok := r.Context().Value("userID").(uuid.UUID)
+	if !ok {
+		log.Println("invalid user ID")
+		http.Error(w, "invalid user ID", http.StatusUnauthorized)
+		return
+	}
+
+	tx := migrations.DB.Begin()
+	defer tx.Rollback()
+
+	if tx.Error != nil {
+		log.Println("error, failed to start transaction")
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	var order models.Order
+	if err := tx.Where("user_id = ? AND status = 'created'", userId).First(&order).Error; err != nil {
+		log.Println("error, failed to find order")
+		http.Error(w, "error, failed to find order", http.StatusNotFound)
+		return
+	}
+
+	if err := tx.Where("order_id = ?", order.ID).Delete(&models.OrderDish{}).Error; err != nil {
+		log.Println("error, failed to delete order dishes")
+		http.Error(w, "error, failed to delete order dishes", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Delete(&order).Error; err != nil {
+		log.Println("error, failed to delete order")
+		http.Error(w, "error, failed to delete order", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		log.Println("error, failed to commit transaction")
+		http.Error(w, "error, failed to commit transaction", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Order deleted successfully"))
 }

@@ -71,6 +71,16 @@ func ShowCourierInformationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func GetActuallOrdersHandler(w http.ResponseWriter, r *http.Request) {
+
+	var orders []models.Order
+	if err := migrations.DB.Where("status = ?", models.WAITFREECOURIER).Find(&orders).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	utils.JSONFormat(w, r, orders)
+}
+
 func SetStatusCourierHandler(w http.ResponseWriter, r *http.Request) {
 	status := r.URL.Query().Get("status")
 	userID, ok := r.Context().Value("userID").(uuid.UUID)
@@ -121,16 +131,6 @@ func SetStatusCourierHandler(w http.ResponseWriter, r *http.Request) {
 		"username": courier.User.Name,
 		"status":   courier.Status,
 	})
-}
-
-func GetActuallOrdersHandler(w http.ResponseWriter, r *http.Request) {
-
-	var orders []models.Order
-	if err := migrations.DB.Where("status = ?", models.WAITFREECOURIER).Find(&orders).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	utils.JSONFormat(w, r, orders)
 }
 
 func SetCourierOnOrderHandler(w http.ResponseWriter, r *http.Request) {

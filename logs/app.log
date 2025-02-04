@@ -8,3 +8,12 @@
 {"fields.time":"2.383435ms","level":"warning","method":"PUT","msg":"User already has this role","path":"/api/admin/users/Darya","status":400,"time":"2025-02-04T15:34:06Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
 {"level":"info","msg":"Сервер запущен успешно","time":"2025-02-04T15:44:09Z"}
 {"level":"info","msg":"Сервер запущен успешно","time":"2025-02-04T15:44:32Z"}
+{"fields.time":"2.408604ms","level":"info","method":"GET","msg":"Users retrieved successfully","path":"/api/admin/users","status":200,"time":"2025-02-04T15:49:02Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"10.606289ms","level":"warning","method":"PUT","msg":"User already has this role","path":"/api/admin/users/Darya","status":400,"time":"2025-02-04T15:49:12Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"18.343078ms","level":"info","method":"PUT","msg":"Dish price updated successfully","path":"/api/admin/dishes/43c9857b-7093-4ebb-a3a4-82f659920e22","status":200,"time":"2025-02-04T15:49:16Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-04T15:54:47Z"}
+{"error":"WHERE conditions required","fields.time":"1.449033ms","level":"error","method":"PUT","msg":"Error updating dish price","path":"/api/admin/dishes/43c9857b-7093-4ebb-a3a4-82f659920e22","status":500,"time":"2025-02-04T15:54:54Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"error":"WHERE conditions required","fields.time":"2.255098ms","level":"error","method":"PUT","msg":"Error updating dish price","path":"/api/admin/dishes/43c9857b-8093-4ebb-a3a4-82f659920e22","status":500,"time":"2025-02-04T15:54:59Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"error":"WHERE conditions required","fields.time":"1.785966ms","level":"error","method":"PUT","msg":"Error updating dish price","path":"/api/admin/dishes/43c9857b-8093-4ebb-a3a4-82f659920e22","status":500,"time":"2025-02-04T15:55:01Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-04T15:56:46Z"}
+{"error":"record not found","fields.time":"2.207527ms","level":"error","method":"PUT","msg":"Dish not found","path":"/api/admin/dishes/43c9857b-8093-4ebb-a3a4-82f659920e22","status":404,"time":"2025-02-04T15:56:53Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}

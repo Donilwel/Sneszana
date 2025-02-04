@@ -193,37 +193,54 @@ func ChangePriceHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(requestID)
 	if err != nil {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Error converting ID to UUID")
-		http.Error(w, "Error converting ID to UUID", http.StatusBadRequest)
+		http.Error(w, "Invalid dish ID", http.StatusBadRequest)
 		return
 	}
 
 	price := r.URL.Query().Get("price")
+	if price == "" {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, startTime, "Missing price parameter")
+		http.Error(w, "Missing price parameter", http.StatusBadRequest)
+		return
+	}
+
 	newPrice, err := strconv.ParseFloat(price, 64)
 	if err != nil {
-		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Error converting price to float")
-		http.Error(w, "Error converting price to float", http.StatusBadRequest)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Invalid price format")
+		http.Error(w, "Invalid price format", http.StatusBadRequest)
 		return
 	}
 
 	tx := migrations.DB.Begin()
-	defer tx.Rollback()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+	}()
 
 	var dish models.Dish
-	if err := tx.Raw("SELECT * FROM dishes WHERE id = ? FOR UPDATE", id).Scan(&dish).Error; err != nil {
-		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error fetching dish")
-		http.Error(w, "Error fetching dish", http.StatusInternalServerError)
+	if err := tx.First(&dish, "id = ?", id).Error; err != nil {
+		tx.Rollback()
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusNotFound, err, startTime, "Dish not found")
+		http.Error(w, "Dish not found", http.StatusNotFound)
 		return
 	}
 
-	dish.Price = newPrice
-
-	if err := tx.Save(&dish).Error; err != nil {
+	if err := tx.Model(&dish).Update("price", newPrice).Error; err != nil {
+		tx.Rollback()
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error updating dish price")
 		http.Error(w, "Error updating dish price", http.StatusInternalServerError)
 		return
 	}
 
-	tx.Commit()
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Transaction commit failed")
+		http.Error(w, "Transaction commit failed", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Dish price updated successfully"))
 	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Dish price updated successfully")

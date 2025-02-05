@@ -2,23 +2,42 @@ package config
 
 import (
 	"context"
-	"github.com/redis/go-redis/v9"
+	"fmt"
 	"log"
+	"os"
+	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 var Rdb *redis.Client
 
 func InitRedis() {
+
+	redisHost := os.Getenv("REDIS_HOST")
+	if redisHost == "" {
+		redisHost = "redis"
+	}
+
+	redisPort := os.Getenv("REDIS_PORT")
+	if redisPort == "" {
+		redisPort = "6379"
+	}
+
+	redisAddr := fmt.Sprintf("%s:%s", redisHost, redisPort)
+
 	Rdb = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     redisAddr,
 		Password: "",
 		DB:       0,
 	})
 
-	ctx := context.Background()
-	_, err := Rdb.Ping(ctx).Result()
-	if err != nil {
-		log.Println("redis connect fail")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if _, err := Rdb.Ping(ctx).Result(); err != nil {
+		log.Println("Failed to connect to Redis")
+		return
 	}
-	log.Println("redis connect success")
+	log.Println("Connected to Redis successfully")
 }

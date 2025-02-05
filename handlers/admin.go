@@ -6,8 +6,6 @@ import (
 	"Sneszana/logging"
 	"Sneszana/models"
 	"Sneszana/utils"
-	"encoding/json"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -20,40 +18,16 @@ func ShowAllCouriersHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	userID, _ := r.Context().Value("userID").(uuid.UUID)
 	status := r.URL.Query().Get("status")
-
 	ctx := r.Context()
 
 	var couriers []models.Courier
-
 	cacheKey := "couriers:all"
 	if status != "" {
-		cacheKey = fmt.Sprintf("couriers:%s", status)
+		cacheKey = "couriers:" + status
 	}
 
-	cachedData, err := config.Rdb.Get(ctx, cacheKey).Result()
-	if err == nil {
-		fmt.Println("📌 Данные из кеша Redis")
-		err = json.Unmarshal([]byte(cachedData), &couriers)
-		if err == nil {
-			utils.JSONFormat(w, r, couriers)
-			logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Couriers from cache")
-			return
-		}
-	}
-
-	// Проверяем статус
-	if status != "" && status != models.ACTIVE && status != models.UNACTIVE && status != models.WAITING {
-		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, startTime, "Unknown status filter")
-		http.Error(w, "Unknown status", http.StatusBadRequest)
-		return
-	}
-
-	// Загружаем из базы
-	query := migrations.DB.WithContext(ctx).Preload("User") // ✅ Контекст передаётся в БД
-	if status != "" {
-		query = query.Where("status = ?", status)
-	}
-	if err := query.Find(&couriers).Error; err != nil {
+	err := utils.GetOrSetCache(ctx, config.Rdb, migrations.DB.WithContext(ctx).Preload("User"), cacheKey, migrations.DB, &couriers, 5*time.Minute)
+	if err != nil {
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error fetching couriers")
 		http.Error(w, "Error fetching couriers", http.StatusInternalServerError)
 		return
@@ -65,30 +39,27 @@ func ShowAllCouriersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonData, _ := json.Marshal(couriers)
-	err = config.Rdb.Set(ctx, cacheKey, jsonData, 5*time.Minute).Err()
-	if err != nil {
-		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to cache couriers in Redis")
-	}
-
-	// Отправляем клиенту
 	utils.JSONFormat(w, r, couriers)
 	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Couriers retrieved successfully")
 }
 
 func ShowAllUsersHandler(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now() // Start tracking execution time
+	startTime := time.Now()
 	userID, _ := r.Context().Value("userID").(uuid.UUID)
-	var users []models.User
+	ctx := r.Context()
 
-	if err := migrations.DB.Find(&users).Error; err != nil {
+	var users []models.User
+	cacheKey := "users:all"
+
+	err := utils.GetOrSetCache(ctx, config.Rdb, migrations.DB, cacheKey, migrations.DB, &users, 5*time.Minute)
+	if err != nil {
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error fetching users")
 		http.Error(w, "Error fetching users", http.StatusInternalServerError)
 		return
 	}
 
 	if len(users) == 0 {
-		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, nil, startTime, "No users found in the database")
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, nil, startTime, "No users found")
 		http.Error(w, "No users found", http.StatusNotFound)
 		return
 	}
@@ -100,17 +71,26 @@ func ShowAllUsersHandler(w http.ResponseWriter, r *http.Request) {
 func ShowAllDishesHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	userID, _ := r.Context().Value("userID").(uuid.UUID)
+	ctx := r.Context()
 
 	var dishes []models.Dish
+	cacheKey := "dishes:all"
 
-	if err := migrations.DB.Find(&dishes).Error; err != nil {
+	err := utils.GetOrSetCache(ctx, config.Rdb, migrations.DB, cacheKey, migrations.DB, &dishes, 5*time.Minute)
+	if err != nil {
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error fetching dishes")
 		http.Error(w, "Error fetching dishes", http.StatusInternalServerError)
 		return
 	}
 
+	if len(dishes) == 0 {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, nil, startTime, "No dishes found")
+		http.Error(w, "No dishes found", http.StatusNotFound)
+		return
+	}
+
 	utils.JSONFormat(w, r, dishes)
-	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Dishes fetched successfully")
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Dishes retrieved successfully")
 }
 
 func ShowCourierHandler(w http.ResponseWriter, r *http.Request) {

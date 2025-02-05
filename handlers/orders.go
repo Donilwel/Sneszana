@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"Sneszana/database/migrations"
+	"Sneszana/logging"
 	"Sneszana/models"
 	"Sneszana/utils"
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"log"
 	"math/rand"
 	"net/http"
@@ -20,66 +22,80 @@ func generateCode() uint {
 }
 
 func ShowOrderHandler(w http.ResponseWriter, r *http.Request) {
-	userId, ok := r.Context().Value("userID").(uuid.UUID)
+	startTime := time.Now()
+	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
-		log.Println("invalid user ID")
-		http.Error(w, "invalid user ID", http.StatusUnauthorized)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusUnauthorized, nil, startTime, "Invalid user ID in request context")
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
 		return
 	}
+
 	tx := migrations.DB.Begin()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
 		}
 	}()
+
 	if err := tx.Error; err != nil {
-		log.Println("error, failed to start transaction")
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to start transaction")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
 	var orders []models.Order
-	if err := tx.Where("user_id = ?", userId).Find(&orders).Error; err != nil {
+	if err := tx.Where("user_id = ?", userID).Find(&orders).Error; err != nil {
 		tx.Rollback()
-		log.Println("error, failed to fetch orders")
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to fetch orders")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	if len(orders) == 0 {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, nil, startTime, "No orders found for user")
+		http.Error(w, "No orders found", http.StatusNotFound)
+		return
+	}
+
 	utils.JSONFormat(w, r, orders)
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Orders retrieved successfully")
 }
 
 func ShowInformationAboutOrderHandler(w http.ResponseWriter, r *http.Request) {
-	orderIdStr := mux.Vars(r)["orderId"]
-	if orderIdStr == "" {
-		log.Println("missing order ID")
-		http.Error(w, "missing order ID", http.StatusBadRequest)
+	startTime := time.Now()
+
+	orderIDStr := mux.Vars(r)["orderId"]
+	if orderIDStr == "" {
+		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, nil, startTime, "Missing order ID in request")
+		http.Error(w, "Missing order ID", http.StatusBadRequest)
 		return
 	}
 
-	orderId, err := uuid.Parse(orderIdStr)
+	orderID, err := uuid.Parse(orderIDStr)
 	if err != nil {
-		log.Println("invalid order ID format")
-		http.Error(w, "invalid order ID format", http.StatusBadRequest)
+		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, err, startTime, "Invalid order ID format")
+		http.Error(w, "Invalid order ID format", http.StatusBadRequest)
 		return
 	}
 
-	userId, ok := r.Context().Value("userID").(uuid.UUID)
+	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
-		log.Println("invalid user ID")
-		http.Error(w, "invalid user ID", http.StatusUnauthorized)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusUnauthorized, nil, startTime, "Invalid or missing user ID")
+		http.Error(w, "Invalid or missing user ID", http.StatusUnauthorized)
 		return
 	}
 
 	var order models.Order
-	if err := migrations.DB.Where("user_id = ? AND id = ?", userId, orderId).First(&order).Error; err != nil {
-		log.Println("error, failed to fetch order")
-		http.Error(w, "order not found", http.StatusNotFound)
+	if err := migrations.DB.Where("user_id = ? AND id = ?", userID, orderID).First(&order).Error; err != nil {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Order not found for user")
+		http.Error(w, "Order not found", http.StatusNotFound)
 		return
 	}
 
 	var orderDishes []models.OrderDish
 	if err := migrations.DB.Where("order_id = ?", order.ID).Find(&orderDishes).Error; err != nil {
-		log.Println("error, failed to fetch dishes")
-		http.Error(w, "dishes not found", http.StatusNotFound)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Dishes not found for order")
+		http.Error(w, "Dishes not found", http.StatusNotFound)
 		return
 	}
 
@@ -89,12 +105,11 @@ func ShowInformationAboutOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var result []OrderDishDetails
-
 	for _, orderDish := range orderDishes {
 		var dish models.Dish
 		if err := migrations.DB.Where("id = ?", orderDish.DishID).First(&dish).Error; err != nil {
-			log.Println("error, failed to fetch dish details")
-			http.Error(w, "dish details not found", http.StatusNotFound)
+			logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Dish details not found for order")
+			http.Error(w, "Dish details not found", http.StatusNotFound)
 			return
 		}
 
@@ -108,28 +123,37 @@ func ShowInformationAboutOrderHandler(w http.ResponseWriter, r *http.Request) {
 		"all dishes":  result,
 		"total price": order.Price,
 	})
+
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Order details retrieved successfully")
 }
 
 func ShowReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	userID, _ := r.Context().Value("userID").(uuid.UUID)
+
 	dishID, err := uuid.Parse(mux.Vars(r)["id"])
 	if err != nil {
-		log.Println("error converting id to uuid")
-		http.Error(w, "error converting id to uuid", http.StatusBadRequest)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Invalid dish ID format")
+		http.Error(w, "Invalid dish ID format", http.StatusBadRequest)
 		return
 	}
+
 	var dish models.Dish
 	if err := migrations.DB.Where("id = ?", dishID).First(&dish).Error; err != nil {
-		log.Println("error, failed to find dish")
-		http.Error(w, "error, failed to find dish", http.StatusNotFound)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Dish not found")
+		http.Error(w, "Dish not found", http.StatusNotFound)
 		return
 	}
+
 	var reviews []models.Review
 	if err := migrations.DB.Where("dish_id = ? AND status = ?", dish.ID, models.ACCEPT).Find(&reviews).Error; err != nil {
-		log.Println("error, failed to find reviews")
-		http.Error(w, "error, failed to find reviews", http.StatusNotFound)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "No accepted reviews found for dish")
+		http.Error(w, "No accepted reviews found", http.StatusNotFound)
 		return
 	}
+
 	utils.JSONFormat(w, r, reviews)
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Reviews retrieved successfully for dish")
 }
 
 func CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
@@ -208,18 +232,26 @@ func CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddToBucketHandler(w http.ResponseWriter, r *http.Request) {
-	userId, ok := r.Context().Value("userID").(uuid.UUID)
+	startTime := time.Now()
+	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
-		log.Println("invalid user ID")
-		http.Error(w, "invalid user ID", http.StatusUnauthorized)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusUnauthorized, nil, startTime, "Invalid or missing user ID")
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
 		return
 	}
-	dishId := mux.Vars(r)["id"]
+
+	dishIDStr := mux.Vars(r)["id"]
+	dishID, err := uuid.Parse(dishIDStr)
+	if err != nil {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Invalid dish ID format")
+		http.Error(w, "Invalid dish ID format", http.StatusBadRequest)
+		return
+	}
 
 	var dish models.Dish
-	if err := migrations.DB.Where("id = ?", dishId).First(&dish).Error; err != nil {
-		log.Println("error, failed to find dish with id: " + dishId)
-		http.Error(w, "error, failed to find dish with id: "+dishId, http.StatusNotFound)
+	if err := migrations.DB.Where("id = ?", dishID).First(&dish).Error; err != nil {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Dish not found")
+		http.Error(w, "Dish not found", http.StatusNotFound)
 		return
 	}
 
@@ -230,22 +262,22 @@ func AddToBucketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	if tx.Error != nil {
-		log.Println("error, failed to start transaction")
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, tx.Error, startTime, "Failed to start transaction")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	var order models.Order
-	if err := tx.Where("user_id = ? AND status = 'created'", userId).First(&order).Error; err != nil {
+	if err := tx.Where("user_id = ? AND status = 'created'", userID).First(&order).Error; err != nil {
 		order = models.Order{
-			UserID: userId,
+			UserID: userID,
 			Price:  0,
 			Status: "created",
 		}
 		if err := tx.Create(&order).Error; err != nil {
 			tx.Rollback()
-			log.Println("error, failed to create order")
-			http.Error(w, "error, failed to create order", http.StatusInternalServerError)
+			logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to create order")
+			http.Error(w, "Failed to create order", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -255,8 +287,8 @@ func AddToBucketHandler(w http.ResponseWriter, r *http.Request) {
 		orderDish.Count += 1
 		if err := tx.Save(&orderDish).Error; err != nil {
 			tx.Rollback()
-			log.Println("error, failed to update orderDish count")
-			http.Error(w, "error, failed to update orderDish count", http.StatusInternalServerError)
+			logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to update orderDish count")
+			http.Error(w, "Failed to update orderDish count", http.StatusInternalServerError)
 			return
 		}
 	} else {
@@ -267,70 +299,78 @@ func AddToBucketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := tx.Create(&orderDish).Error; err != nil {
 			tx.Rollback()
-			log.Println("error, failed to create orderDish")
-			http.Error(w, "error, failed to create orderDish", http.StatusInternalServerError)
+			logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to create orderDish entry")
+			http.Error(w, "Failed to create orderDish", http.StatusInternalServerError)
 			return
 		}
 	}
+
 	order.Price += dish.Price
 	if err := tx.Save(&order).Error; err != nil {
 		tx.Rollback()
-		log.Println("error, failed to update order")
-		http.Error(w, "error, failed to update order", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to update order price")
+		http.Error(w, "Failed to update order", http.StatusInternalServerError)
 		return
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		log.Println("error, failed to commit transaction")
-		http.Error(w, "error, failed to commit transaction", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to commit transaction")
+		http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
 		return
 	}
 
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Dish added to bucket successfully")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Dish added to bucket successfully"))
 }
 
 func SetReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
-	userId := r.Context().Value("userID").(uuid.UUID)
+	startTime := time.Now()
+	userID, ok := r.Context().Value("userID").(uuid.UUID)
+	if !ok {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusUnauthorized, nil, startTime, "Invalid or missing user ID")
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
 
 	var user models.User
-	if err := migrations.DB.Where("id = ?", userId).First(&user).Error; err != nil {
-		log.Println("error, failed to find user")
-		http.Error(w, "error, failed to find user", http.StatusNotFound)
+	if err := migrations.DB.Where("id = ?", userID).First(&user).Error; err != nil {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "User not found")
+		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 
 	dishID, err := uuid.Parse(mux.Vars(r)["id"])
 	if err != nil {
-		log.Println("error converting id to uuid")
-		http.Error(w, "error converting id to uuid", http.StatusBadRequest)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Invalid dish ID format")
+		http.Error(w, "Invalid dish ID format", http.StatusBadRequest)
 		return
 	}
 
 	var dish models.Dish
 	if err := migrations.DB.Where("id = ?", dishID).First(&dish).Error; err != nil {
-		log.Println("error, failed to find dish")
-		http.Error(w, "error, failed to find dish", http.StatusNotFound)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Dish not found")
+		http.Error(w, "Dish not found", http.StatusNotFound)
 		return
 	}
 
 	var review models.Review
 	if err := json.NewDecoder(r.Body).Decode(&review); err != nil {
-		log.Println("error, failed to decode review")
-		http.Error(w, "error, failed to decode review", http.StatusBadRequest)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Invalid review JSON format")
+		http.Error(w, "Invalid review format", http.StatusBadRequest)
 		return
 	}
 
 	if review.Mark < 1 || review.Mark > 5 {
-		log.Println("error, mark must be between 1 and 5")
-		http.Error(w, "error, mark must be between 1 and 5", http.StatusBadRequest)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, startTime, "Invalid review mark (must be between 1 and 5)")
+		http.Error(w, "Mark must be between 1 and 5", http.StatusBadRequest)
 		return
 	}
 
 	review.TextMessage = strings.TrimSpace(review.TextMessage)
 	if review.TextMessage == "" {
-		log.Println("error. write incorrect information")
-		http.Error(w, "error. write incorrect information", http.StatusBadRequest)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, startTime, "Empty review text")
+		http.Error(w, "Review text cannot be empty", http.StatusBadRequest)
 		return
 	}
 
@@ -342,47 +382,53 @@ func SetReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
 	var count int64
 	err = tx.Table("order_dishes").
 		Joins("JOIN orders ON orders.id = order_dishes.order_id").
-		Where("orders.user_id = ? AND orders.status = ? AND order_dishes.dish_id = ?", userId, models.CLOSED, review.DishID).
+		Where("orders.user_id = ? AND orders.status = ? AND order_dishes.dish_id = ?", userID, models.CLOSED, review.DishID).
 		Count(&count).Error
 
 	if err != nil || count == 0 {
-		log.Println("user never ordered this dish")
-		http.Error(w, "user never ordered this dish", http.StatusForbidden)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusForbidden, err, startTime, "User has never ordered this dish")
+		http.Error(w, "You can only review dishes you have ordered", http.StatusForbidden)
 		return
 	}
 
 	var existingReview models.Review
-	if err := tx.Where("user_id = ? AND dish_id = ?", userId, review.DishID).First(&existingReview).Error; err == nil {
-		log.Println("error, review already exists for this dish")
-		http.Error(w, "error, review already exists for this dish", http.StatusConflict)
+	if err := tx.Where("user_id = ? AND dish_id = ?", userID, review.DishID).First(&existingReview).Error; err == nil {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusConflict, nil, startTime, "User already reviewed this dish")
+		http.Error(w, "You have already reviewed this dish", http.StatusConflict)
 		return
 	}
 
-	review.UserID = userId
+	review.UserID = userID
 	review.Status = models.CHECK
 	if err := tx.Create(&review).Error; err != nil {
-		log.Println("error, failed to create review")
-		http.Error(w, "error, failed to create review", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to create review")
+		http.Error(w, "Failed to create review", http.StatusInternalServerError)
 		return
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		log.Println("transaction commit failed")
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Transaction commit failed")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	utils.JSONFormat(w, r, map[string]interface{}{
-		"text_user":      "now your review on cheking by admin",
+
+	response := map[string]interface{}{
+		"text_user":      "Now your review is under admin review",
 		"dish":           dish.Name,
 		"review_message": review.TextMessage,
-		"mark":           review.Mark})
+		"mark":           review.Mark,
+	}
+
+	utils.JSONFormat(w, r, response)
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Review submitted successfully")
 }
 
 func DeleteOrderHandler(w http.ResponseWriter, r *http.Request) {
-	userId, ok := r.Context().Value("userID").(uuid.UUID)
+	startTime := time.Now()
+	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
-		log.Println("invalid user ID")
-		http.Error(w, "invalid user ID", http.StatusUnauthorized)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusUnauthorized, nil, startTime, "Invalid or missing user ID")
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
 		return
 	}
 
@@ -390,36 +436,37 @@ func DeleteOrderHandler(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 
 	if tx.Error != nil {
-		log.Println("error, failed to start transaction")
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, tx.Error, startTime, "Failed to start transaction")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	var order models.Order
-	if err := tx.Where("user_id = ? AND status = 'created'", userId).First(&order).Error; err != nil {
-		log.Println("error, failed to find order")
-		http.Error(w, "error, failed to find order", http.StatusNotFound)
+	if err := tx.Where("user_id = ? AND status = 'created'", userID).First(&order).Error; err != nil {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Order not found for user")
+		http.Error(w, "Order not found", http.StatusNotFound)
 		return
 	}
 
 	if err := tx.Where("order_id = ?", order.ID).Delete(&models.OrderDish{}).Error; err != nil {
-		log.Println("error, failed to delete order dishes")
-		http.Error(w, "error, failed to delete order dishes", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to delete order dishes")
+		http.Error(w, "Failed to delete order dishes", http.StatusInternalServerError)
 		return
 	}
 
 	if err := tx.Delete(&order).Error; err != nil {
-		log.Println("error, failed to delete order")
-		http.Error(w, "error, failed to delete order", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to delete order")
+		http.Error(w, "Failed to delete order", http.StatusInternalServerError)
 		return
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		log.Println("error, failed to commit transaction")
-		http.Error(w, "error, failed to commit transaction", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Transaction commit failed")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Order deleted successfully")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Order deleted successfully"))
 }

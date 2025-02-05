@@ -2,13 +2,16 @@ package handlers
 
 import (
 	"Sneszana/database/migrations"
+	"Sneszana/logging"
 	"Sneszana/models"
 	"Sneszana/utils"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 var Accepted uint
@@ -30,20 +33,22 @@ var Accepted uint
 //}
 
 func ShowCourierInformationHandler(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
 	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusUnauthorized, nil, startTime, "Invalid user ID")
 		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
 		return
 	}
 	check := r.URL.Query().Get("check")
 	var courier models.Courier
 	if err := migrations.DB.Preload("User").Where("user_id = ?", userID).First(&courier).Error; err != nil {
-		log.Println("Courier not found")
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Courier not found")
 		http.Error(w, "Courier not found", http.StatusNotFound)
 		return
 	}
 	if check == "" {
-		log.Println("Current courier showed successfully")
+		logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Current courier showed successfully")
 		utils.JSONFormat(w, r, courier)
 	} else {
 		shower := ""
@@ -63,29 +68,47 @@ func ShowCourierInformationHandler(w http.ResponseWriter, r *http.Request) {
 		case "phone":
 			shower = courier.User.PhoneNumber
 		default:
-			log.Println("Unknown check courier information")
+			logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, startTime, "Unknown check courier information")
 			http.Error(w, "Unknown check courier information, use name, rating, status, ordersCount, id, email, phone", http.StatusBadRequest)
 			return
 		}
+		logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Current courier showed successfully")
 		utils.JSONFormat(w, r, shower)
 	}
 }
 
 func GetActuallOrdersHandler(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	userID, ok := r.Context().Value("userID").(uuid.UUID)
+	if !ok {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusUnauthorized, nil, startTime, "Invalid user ID in request context")
+		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		return
+	}
 
 	var orders []models.Order
 	if err := migrations.DB.Where("status = ?", models.WAITFREECOURIER).Find(&orders).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Database error while fetching orders")
+		http.Error(w, "Error fetching orders", http.StatusInternalServerError)
 		return
 	}
+
+	if len(orders) == 0 {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, nil, startTime, "No available orders found")
+		http.Error(w, "No available orders", http.StatusNotFound)
+		return
+	}
+
 	utils.JSONFormat(w, r, orders)
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Orders retrieved successfully")
 }
 
 func SetStatusCourierHandler(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
 	status := r.URL.Query().Get("status")
 	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
-		log.Println("Invalid user ID", http.StatusUnauthorized)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusUnauthorized, nil, startTime, "Invalid user ID in request context")
 		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
 		return
 	}
@@ -95,16 +118,14 @@ func SetStatusCourierHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Courier not found", http.StatusNotFound)
 		return
 	}
-	//if courier.Status == models.ACTIVE && status != models.ACTIVE {
-	//	//тут потом дописать надо логику счетчика заказов чтобы курьер не крутил
-	//	// скорее всего просто покупатель будет отмечать что заказ получен и глобальная переменная будет
-	//	// изменяться на 2 и тогда счетчик будет готов
-	//
-	//	Accepted = 1
-	//}
 	if status == courier.Status {
-		log.Println("Courier status is already setted")
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, time.Now(), "Courier status is already setted")
 		http.Error(w, "Courier status is already setted", http.StatusBadRequest)
+		return
+	}
+	if (status == models.UNACTIVE || status == models.WAITING) && status == models.ACTIVE {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, time.Now(), "Courier now is active")
+		http.Error(w, "Courier now is active", http.StatusBadRequest)
 		return
 	}
 	switch status {
@@ -115,17 +136,16 @@ func SetStatusCourierHandler(w http.ResponseWriter, r *http.Request) {
 	case models.WAITING:
 		courier.Status = models.WAITING
 	default:
-		log.Println("Invalid status")
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, time.Now(), "Invalid status")
 		http.Error(w, "Invalid status", http.StatusBadRequest)
 		return
 	}
 	if err := migrations.DB.Save(&courier).Error; err != nil {
-		log.Println("Courier save failed")
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, time.Now(), "Courier save error")
 		http.Error(w, "Courier save failed", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("Courier status on %s successfully changed", status)
-	log.Println("Current courier set status successfully")
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, time.Now(), "Courier saved")
 	w.WriteHeader(http.StatusOK)
 	utils.JSONFormat(w, r, map[string]interface{}{
 		"username": courier.User.Name,
@@ -134,47 +154,53 @@ func SetStatusCourierHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func SetCourierOnOrderHandler(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
 	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
-		log.Println("invalid or missing userID", http.StatusUnauthorized)
-		http.Error(w, "invalid or missing userID", http.StatusUnauthorized)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusUnauthorized, nil, startTime, "Invalid or missing user ID")
+		http.Error(w, "Invalid or missing user ID", http.StatusUnauthorized)
 		return
 	}
 
 	orderID := mux.Vars(r)["orderID"]
+	if _, err := uuid.Parse(orderID); err != nil {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Invalid order ID format")
+		http.Error(w, "Invalid order ID format", http.StatusBadRequest)
+		return
+	}
 
 	tx := migrations.DB.Begin()
 	defer tx.Rollback()
 
 	if tx.Error != nil {
-		log.Println("error, failed to start transaction")
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, tx.Error, startTime, "Failed to start transaction")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	var courier models.Courier
-	if err := tx.Where("User_id = ?", userID).First(&courier).Error; err != nil {
-		log.Println("courier not found")
-		http.Error(w, "courier not found", http.StatusNotFound)
+	if err := tx.Where("user_id = ?", userID).First(&courier).Error; err != nil {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Courier not found")
+		http.Error(w, "Courier not found", http.StatusNotFound)
 		return
 	}
 
 	var order models.Order
 	if err := tx.Set("gorm:query_option", "FOR UPDATE").Where("id = ?", orderID).First(&order).Error; err != nil {
-		log.Println("order not found")
-		http.Error(w, "order not found", http.StatusNotFound)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Order not found")
+		http.Error(w, "Order not found", http.StatusNotFound)
 		return
 	}
 
 	if order.Status != models.WAITFREECOURIER {
-		log.Println("order is already taken")
-		http.Error(w, "order is already taken", http.StatusConflict)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusConflict, nil, startTime, "Order is already taken")
+		http.Error(w, "Order is already taken", http.StatusConflict)
 		return
 	}
 
 	if courier.Status != models.WAITING {
-		log.Println("courier status is not available")
-		http.Error(w, "courier status is not available. Need courier status = waiting", http.StatusConflict)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusConflict, nil, startTime, "Courier status is not available")
+		http.Error(w, "Courier status is not available. Need courier status = waiting", http.StatusConflict)
 		return
 	}
 
@@ -183,113 +209,115 @@ func SetCourierOnOrderHandler(w http.ResponseWriter, r *http.Request) {
 	courier.Status = models.ACTIVE
 
 	if err := tx.Save(&order).Error; err != nil {
-		log.Println("order save failed")
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to save order changes")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	if err := tx.Save(&courier).Error; err != nil {
-		log.Println("courier save failed")
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to save courier changes")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	var address models.Address
 	if err := tx.Where("order_id = ?", order.ID).First(&address).Error; err != nil {
-		log.Println("address not found")
-		http.Error(w, "address not found", http.StatusNotFound)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Address not found for order")
+		http.Error(w, "Address not found", http.StatusNotFound)
 		return
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		log.Println("transaction commit failed")
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Transaction commit failed")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
 	utils.JSONFormat(w, r, order)
 	utils.JSONFormat(w, r, address)
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Courier successfully assigned to order")
 }
 
 func SetFinishOrderByCourierHandler(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
 	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
-		log.Println("invalid or missing userID", http.StatusUnauthorized)
-		http.Error(w, "invalid or missing userID", http.StatusUnauthorized)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusUnauthorized, nil, startTime, "Invalid or missing user ID")
+		http.Error(w, "Invalid or missing user ID", http.StatusUnauthorized)
 		return
 	}
 
-	var courier models.Courier
-	var order models.Order
 	tx := migrations.DB.Begin()
 	defer tx.Rollback()
 
-	if err := tx.Where("User_id = ?", userID).First(&courier).Error; err != nil {
-		log.Println("courier not found")
-		http.Error(w, "courier not found", http.StatusNotFound)
+	var courier models.Courier
+	if err := tx.Where("user_id = ?", userID).First(&courier).Error; err != nil {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Courier not found")
+		http.Error(w, "Courier not found", http.StatusNotFound)
 		return
 	}
 
-	if tx.Where("courier_id = ? AND status = ?", courier.ID, models.ONTHEWAY).First(&order).Error != nil {
-		log.Println("order not found")
-		http.Error(w, "order not found", http.StatusNotFound)
+	var order models.Order
+	if err := tx.Where("courier_id = ? AND status = ?", courier.ID, models.ONTHEWAY).First(&order).Error; err != nil {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Order not found or not in transit")
+		http.Error(w, "Order not found or not in transit", http.StatusNotFound)
 		return
 	}
 
-	log.Println(order.ID)
-
-	var cheker models.Checker
-	if err := tx.Where("order_id = ?", order.ID).First(&cheker).Error; err != nil {
-		log.Println("checker not found")
-		http.Error(w, "checker not found", http.StatusNotFound)
+	var checker models.Checker
+	if err := tx.Where("order_id = ?", order.ID).First(&checker).Error; err != nil {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Checker not found for order")
+		http.Error(w, "Checker not found", http.StatusNotFound)
 		return
 	}
 
 	checkCodeStr := r.URL.Query().Get("code")
 	if checkCodeStr == "" {
-		log.Println("checkCode is required")
-		http.Error(w, "checkCode is required", http.StatusBadRequest)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, startTime, "Check code is required")
+		http.Error(w, "Check code is required", http.StatusBadRequest)
 		return
 	}
 
 	checkCode, err := strconv.ParseUint(checkCodeStr, 10, 32)
 	if err != nil {
-		log.Println("Invalid checkCode format")
-		http.Error(w, "Invalid checkCode format", http.StatusBadRequest)
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Invalid check code format")
+		http.Error(w, "Invalid check code format", http.StatusBadRequest)
 		return
 	}
 
-	if uint(checkCode) != cheker.CodeChecker {
-		log.Println("checkCode is invalid")
-		http.Error(w, "checkCode is invalid", http.StatusBadRequest)
+	if uint(checkCode) != checker.CodeChecker {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, startTime, "Invalid check code entered")
+		http.Error(w, "Invalid check code", http.StatusBadRequest)
 		return
 	}
 
 	order.Status = models.CLOSED
 	courier.Status = models.WAITING
-	courier.OrdersCount += 1
+	courier.OrdersCount++
 
 	if err := tx.Save(&order).Error; err != nil {
-		log.Println("order save failed")
-		http.Error(w, "order save failed", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to update order status")
+		http.Error(w, "Failed to update order status", http.StatusInternalServerError)
 		return
 	}
 
 	if err := tx.Save(&courier).Error; err != nil {
-		log.Println("courier save failed")
-		http.Error(w, "courier save failed", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to update courier status")
+		http.Error(w, "Failed to update courier status", http.StatusInternalServerError)
 		return
 	}
 
-	if err := tx.Delete(&cheker).Error; err != nil {
-		log.Println("failed to delete checker")
-		http.Error(w, "failed to delete checker", http.StatusInternalServerError)
+	if err := tx.Delete(&checker).Error; err != nil {
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to delete checker")
+		http.Error(w, "Failed to delete checker", http.StatusInternalServerError)
 		return
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		log.Println("Transaction commit failed")
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Transaction commit failed")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	utils.JSONFormat(w, r, order)
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Order successfully completed by courier")
 }

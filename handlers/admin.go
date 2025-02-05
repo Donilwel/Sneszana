@@ -26,8 +26,7 @@ func ShowAllCouriersHandler(w http.ResponseWriter, r *http.Request) {
 		cacheKey = "couriers:" + status
 	}
 
-	err := utils.GetOrSetCache(ctx, config.Rdb, migrations.DB.WithContext(ctx).Preload("User"), cacheKey, migrations.DB, &couriers, 5*time.Minute)
-	if err != nil {
+	if err := utils.GetOrSetCache(ctx, config.Rdb, migrations.DB.WithContext(ctx).Preload("User"), cacheKey, migrations.DB, &couriers, 5*time.Minute); err != nil {
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error fetching couriers")
 		http.Error(w, "Error fetching couriers", http.StatusInternalServerError)
 		return
@@ -51,8 +50,7 @@ func ShowAllUsersHandler(w http.ResponseWriter, r *http.Request) {
 	var users []models.User
 	cacheKey := "users:all"
 
-	err := utils.GetOrSetCache(ctx, config.Rdb, migrations.DB, cacheKey, migrations.DB, &users, 5*time.Minute)
-	if err != nil {
+	if err := utils.GetOrSetCache(ctx, config.Rdb, migrations.DB, cacheKey, migrations.DB, &users, 5*time.Minute); err != nil {
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error fetching users")
 		http.Error(w, "Error fetching users", http.StatusInternalServerError)
 		return
@@ -89,8 +87,8 @@ func ShowAllDishesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.JSONFormat(w, r, dishes)
 	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Dishes retrieved successfully")
+	utils.JSONFormat(w, r, dishes)
 }
 
 func ShowCourierHandler(w http.ResponseWriter, r *http.Request) {
@@ -261,7 +259,7 @@ func ChangeReviewsStatusHandler(w http.ResponseWriter, r *http.Request) {
 func DeleteDishesHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	userID, _ := r.Context().Value("userID").(uuid.UUID)
-	dishID := r.URL.Query().Get("id")
+	dishID := mux.Vars(r)["id"]
 
 	if _, err := uuid.Parse(dishID); err != nil {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Invalid dish ID format")

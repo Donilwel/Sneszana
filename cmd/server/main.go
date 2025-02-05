@@ -19,7 +19,6 @@ func main() {
 	config.InitRedis()
 
 	r := mux.NewRouter()
-
 	logging.InitLogging()
 	logging.Log.Info("Сервер запущен успешно")
 
@@ -38,16 +37,16 @@ func main() {
 
 	kitchenRouter := apiRouter.PathPrefix("/kitchen").Subrouter()
 	//kitchenRouter.Use(utils.AuthMiddleware(models.STAFF_ROLE))
-	kitchenRouter.HandleFunc("/change/{id}", handlers.ChangeStaffStatusOrderHandler).Methods("POST")
+	kitchenRouter.HandleFunc("/{id}", handlers.ChangeStaffStatusOrderHandler).Methods("POST")
 	kitchenRouter.HandleFunc("/", handlers.ShowCookingOrdersHandler).Methods("GET")
 
 	ordersRouter := apiRouter.PathPrefix("/orders").Subrouter()
 	ordersRouter.Use(utils.AuthMiddleware(models.CUSTOMER_ROLE))
 	ordersRouter.HandleFunc("/", handlers.ShowOrderHandler).Methods("GET")
 	ordersRouter.HandleFunc("/", handlers.CreateOrderHandler).Methods("POST")
+	ordersRouter.HandleFunc("/", handlers.DeleteOrderHandler).Methods("DELETE")
 	ordersRouter.HandleFunc("/{orderId}", handlers.ShowInformationAboutOrderHandler).Methods("GET")
 	ordersRouter.HandleFunc("/add/{id}", handlers.AddToBucketHandler).Methods("POST")
-	ordersRouter.HandleFunc("/delete", handlers.DeleteOrderHandler).Methods("DELETE")
 	//ordersRouter.HandleFunc("/reviews/courier/{id}", handlers.SetReviewOnCourierHandler).Methods("POST")
 
 	//оставить отзыв на блюдо может человек который купил когда-то этот товар
@@ -62,7 +61,7 @@ func main() {
 	adminRouter.HandleFunc("/users/{username}", handlers.SetRolesHandler).Methods("PUT")
 	adminRouter.HandleFunc("/dishes", handlers.ShowAllDishesHandler).Methods("GET")
 	adminRouter.HandleFunc("/dishes/{id}", handlers.ChangePriceHandler).Methods("PUT")
-	adminRouter.HandleFunc("/dishes/delete", handlers.DeleteDishesHandler).Methods("DELETE")
+	adminRouter.HandleFunc("/dishes/{id}", handlers.DeleteDishesHandler).Methods("DELETE")
 	//adminRouter.HandleFunc("/reviews", handlers.ShowReviewsStatusHandler).Methods("GET")
 	adminRouter.HandleFunc("/reviews/{id}", handlers.ChangeReviewsStatusHandler).Methods("PUT")
 

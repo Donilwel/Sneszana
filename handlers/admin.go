@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"Sneszana/config"
 	"Sneszana/database/migrations"
 	"Sneszana/logging"
 	"Sneszana/models"
 	"Sneszana/utils"
+	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -18,32 +21,57 @@ func ShowAllCouriersHandler(w http.ResponseWriter, r *http.Request) {
 	userID, _ := r.Context().Value("userID").(uuid.UUID)
 	status := r.URL.Query().Get("status")
 
+	ctx := r.Context()
+
 	var couriers []models.Courier
 
-	if status == "" {
-		if err := migrations.DB.Preload("User").Find(&couriers).Error; err != nil {
-			logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error fetching all couriers")
-			http.Error(w, "Error fetching couriers", http.StatusInternalServerError)
-			return
-		}
-	} else {
-		if status != models.ACTIVE && status != models.UNACTIVE && status != models.WAITING {
-			logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, startTime, "Unknown status filter")
-			http.Error(w, "Unknown status", http.StatusBadRequest)
-			return
-		}
+	cacheKey := "couriers:all"
+	if status != "" {
+		cacheKey = fmt.Sprintf("couriers:%s", status)
+	}
 
-		if err := migrations.DB.Where("status = ?", status).Find(&couriers).Error; err != nil {
-			logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error fetching couriers with status")
-			http.Error(w, "Error fetching couriers with status: "+status, http.StatusInternalServerError)
+	cachedData, err := config.Rdb.Get(ctx, cacheKey).Result()
+	if err == nil {
+		fmt.Println("📌 Данные из кеша Redis")
+		err = json.Unmarshal([]byte(cachedData), &couriers)
+		if err == nil {
+			utils.JSONFormat(w, r, couriers)
+			logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Couriers from cache")
 			return
 		}
 	}
+
+	// Проверяем статус
+	if status != "" && status != models.ACTIVE && status != models.UNACTIVE && status != models.WAITING {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, startTime, "Unknown status filter")
+		http.Error(w, "Unknown status", http.StatusBadRequest)
+		return
+	}
+
+	// Загружаем из базы
+	query := migrations.DB.WithContext(ctx).Preload("User") // ✅ Контекст передаётся в БД
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+	if err := query.Find(&couriers).Error; err != nil {
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error fetching couriers")
+		http.Error(w, "Error fetching couriers", http.StatusInternalServerError)
+		return
+	}
+
 	if len(couriers) == 0 {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, nil, startTime, "No couriers found")
 		http.Error(w, "No couriers found", http.StatusNotFound)
 		return
 	}
+
+	jsonData, _ := json.Marshal(couriers)
+	err = config.Rdb.Set(ctx, cacheKey, jsonData, 5*time.Minute).Err()
+	if err != nil {
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to cache couriers in Redis")
+	}
+
+	// Отправляем клиенту
 	utils.JSONFormat(w, r, couriers)
 	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Couriers retrieved successfully")
 }

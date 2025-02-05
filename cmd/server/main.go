@@ -13,8 +13,11 @@ import (
 )
 
 func main() {
+
 	config.LoadEnv()
 	migrations.InitDB()
+	config.InitRedis()
+
 	r := mux.NewRouter()
 
 	logging.InitLogging()

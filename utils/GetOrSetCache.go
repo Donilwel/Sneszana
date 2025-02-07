@@ -3,28 +3,31 @@ package utils
 import (
 	"context"
 	"encoding/json"
+	"github.com/sirupsen/logrus"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
-func GetOrSetCache[T any](ctx context.Context, rdb *redis.Client, db *gorm.DB, cacheKey string, query *gorm.DB, dest *[]T, ttl time.Duration) error {
+func GetOrSetTCache[T any](ctx context.Context, rdb *redis.Client, db *gorm.DB, cacheKey string, query *gorm.DB, dest *[]T, ttl time.Duration) (bool, error) {
 	cachedData, err := rdb.Get(ctx, cacheKey).Result()
 	if err == nil {
 		if err = json.Unmarshal([]byte(cachedData), dest); err == nil {
-			return nil
+			logrus.Info("Data retrieved from cache: ", cacheKey) // Логируем источник данных
+			return true, nil
 		}
 	}
 
 	if err := query.Find(dest).Error; err != nil {
-		return err
+		return false, err
 	}
 
 	if len(*dest) > 0 {
 		jsonData, _ := json.Marshal(dest)
 		_ = rdb.Set(ctx, cacheKey, jsonData, ttl).Err()
+		logrus.Info("Data retrieved from database and cached: ", cacheKey) // Логируем источник данных
 	}
 
-	return nil
+	return false, nil
 }

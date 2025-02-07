@@ -1,0 +1,38 @@
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-07T06:17:43Z"}
+{"fields.time":"99.762492ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-02-07T06:18:50Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"527.622µs","level":"info","method":"GET","msg":"Couriers retrieved from cache","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:19:01Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"635.568µs","level":"info","method":"GET","msg":"Couriers retrieved from cache","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:19:06Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"605.647µs","level":"info","method":"GET","msg":"Couriers retrieved from cache","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:19:23Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"782.614µs","level":"info","method":"GET","msg":"Couriers retrieved from cache","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:19:24Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"763.659µs","level":"info","method":"GET","msg":"Couriers retrieved from cache","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:21:42Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"926.374µs","level":"info","method":"GET","msg":"Couriers retrieved from cache","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:25:44Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-07T06:25:50Z"}
+{"fields.time":"3.332975ms","level":"info","method":"GET","msg":"Couriers retrieved successfully","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:25:52Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"485.856µs","level":"info","method":"GET","msg":"Couriers retrieved successfully","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:25:53Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"1.247354ms","level":"info","method":"GET","msg":"Couriers retrieved successfully","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:25:54Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"2.080299ms","level":"info","method":"GET","msg":"Couriers retrieved successfully","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:25:55Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"2.157667ms","level":"info","method":"GET","msg":"Dishes retrieved successfully","path":"/api/restaurants/menu","status":200,"time":"2025-02-07T06:31:25Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"530.889µs","level":"info","method":"GET","msg":"Dishes retrieved successfully","path":"/api/restaurants/menu","status":200,"time":"2025-02-07T06:32:59Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-07T06:37:37Z"}
+{"fields.time":"2.229837ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from database","path":"/api/restaurants/menu","status":200,"time":"2025-02-07T06:37:43Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"671.69µs","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/restaurants/menu","status":200,"time":"2025-02-07T06:37:51Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"1.411338ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/restaurants/menu","status":200,"time":"2025-02-07T06:37:58Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"696.447µs","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/restaurants/menu","status":200,"time":"2025-02-07T06:38:08Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"560.2µs","level":"info","method":"GET","msg":"Dishes retrieved successfully","path":"/api/admin/dishes","status":200,"time":"2025-02-07T06:39:28Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"947.538µs","level":"info","method":"GET","msg":"Dishes retrieved successfully","path":"/api/admin/dishes","status":200,"time":"2025-02-07T06:39:32Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-07T06:40:22Z"}
+{"fields.time":"836.575µs","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/admin/dishes","status":200,"time":"2025-02-07T06:40:27Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-07T06:44:06Z"}
+{"fields.time":"1.91423ms","level":"info","method":"GET","msg":"Users retrieved successfully from database","path":"/api/admin/users","status":200,"time":"2025-02-07T06:44:17Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"1.125984ms","level":"info","method":"GET","msg":"Users retrieved successfully from cache","path":"/api/admin/users","status":200,"time":"2025-02-07T06:44:30Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"1.10248ms","level":"info","method":"GET","msg":"Users retrieved successfully from cache","path":"/api/admin/users","status":200,"time":"2025-02-07T06:44:37Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-07T06:46:21Z"}
+{"fields.time":"2.983765ms","level":"info","method":"GET","msg":"Couriers retrieved successfully from database","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:46:33Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"864.191µs","level":"info","method":"GET","msg":"Couriers retrieved successfully from cache","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:46:45Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"978.879µs","level":"info","method":"GET","msg":"Couriers retrieved successfully from cache","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:49:00Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-02-07T06:49:13Z"}
+{"fields.time":"1.010794ms","level":"info","method":"GET","msg":"Couriers retrieved successfully from cache","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:49:15Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"3.595527ms","level":"info","method":"GET","msg":"Couriers retrieved successfully from database","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:50:06Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"531.92µs","level":"info","method":"GET","msg":"Couriers retrieved successfully from cache","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:50:20Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"3.159974ms","level":"info","method":"GET","msg":"Users retrieved successfully from database","path":"/api/admin/users","status":200,"time":"2025-02-07T06:51:23Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"1.566385ms","level":"info","method":"GET","msg":"Users retrieved successfully from cache","path":"/api/admin/users","status":200,"time":"2025-02-07T06:51:30Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}

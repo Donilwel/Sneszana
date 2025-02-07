@@ -21,7 +21,7 @@ func RestaurantsMenuHandler(w http.ResponseWriter, r *http.Request) {
 	var dishes []models.Dish
 	cacheKey := "dishes:all"
 
-	err := utils.GetOrSetCache(ctx, config.Rdb, migrations.DB, cacheKey, migrations.DB, &dishes, 5*time.Minute)
+	fromCache, err := utils.GetOrSetTCache(ctx, config.Rdb, migrations.DB, cacheKey, migrations.DB, &dishes, 5*time.Minute)
 	if err != nil {
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error fetching dishes")
 		http.Error(w, "Error fetching dishes", http.StatusInternalServerError)
@@ -34,7 +34,11 @@ func RestaurantsMenuHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Dishes retrieved successfully")
+	source := "database"
+	if fromCache {
+		source = "cache"
+	}
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Dishes retrieved successfully from "+source)
 	utils.JSONFormat(w, r, dishes)
 }
 

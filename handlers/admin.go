@@ -26,7 +26,8 @@ func ShowAllCouriersHandler(w http.ResponseWriter, r *http.Request) {
 		cacheKey = "couriers:" + status
 	}
 
-	if err := utils.GetOrSetCache(ctx, config.Rdb, migrations.DB.WithContext(ctx).Preload("User"), cacheKey, migrations.DB, &couriers, 5*time.Minute); err != nil {
+	fromCache, err := utils.GetOrSetTCache(ctx, config.Rdb, migrations.DB.WithContext(ctx), cacheKey, migrations.DB.WithContext(ctx).Preload("User"), &couriers, 5*time.Minute)
+	if err != nil {
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error fetching couriers")
 		http.Error(w, "Error fetching couriers", http.StatusInternalServerError)
 		return
@@ -37,9 +38,12 @@ func ShowAllCouriersHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "No couriers found", http.StatusNotFound)
 		return
 	}
-
+	data := "database"
+	if fromCache {
+		data = "cache"
+	}
 	utils.JSONFormat(w, r, couriers)
-	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Couriers retrieved successfully")
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Couriers retrieved successfully from "+data)
 }
 
 func ShowAllUsersHandler(w http.ResponseWriter, r *http.Request) {
@@ -49,8 +53,8 @@ func ShowAllUsersHandler(w http.ResponseWriter, r *http.Request) {
 
 	var users []models.User
 	cacheKey := "users:all"
-
-	if err := utils.GetOrSetCache(ctx, config.Rdb, migrations.DB, cacheKey, migrations.DB, &users, 5*time.Minute); err != nil {
+	fromCache, err := utils.GetOrSetTCache(ctx, config.Rdb, migrations.DB, cacheKey, migrations.DB, &users, 5*time.Minute)
+	if err != nil {
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error fetching users")
 		http.Error(w, "Error fetching users", http.StatusInternalServerError)
 		return
@@ -61,9 +65,12 @@ func ShowAllUsersHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "No users found", http.StatusNotFound)
 		return
 	}
-
+	data := "database"
+	if fromCache {
+		data = "cache"
+	}
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Users retrieved successfully from "+data)
 	utils.JSONFormat(w, r, users)
-	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Users retrieved successfully")
 }
 
 func ShowAllDishesHandler(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +81,7 @@ func ShowAllDishesHandler(w http.ResponseWriter, r *http.Request) {
 	var dishes []models.Dish
 	cacheKey := "dishes:all"
 
-	err := utils.GetOrSetCache(ctx, config.Rdb, migrations.DB, cacheKey, migrations.DB, &dishes, 5*time.Minute)
+	fromCache, err := utils.GetOrSetTCache(ctx, config.Rdb, migrations.DB, cacheKey, migrations.DB, &dishes, 5*time.Minute)
 	if err != nil {
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error fetching dishes")
 		http.Error(w, "Error fetching dishes", http.StatusInternalServerError)
@@ -87,7 +94,11 @@ func ShowAllDishesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Dishes retrieved successfully")
+	source := "database"
+	if fromCache {
+		source = "cache"
+	}
+	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Dishes retrieved successfully from "+source)
 	utils.JSONFormat(w, r, dishes)
 }
 

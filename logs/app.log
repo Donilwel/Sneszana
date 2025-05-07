@@ -36,3 +36,83 @@
 {"fields.time":"531.92µs","level":"info","method":"GET","msg":"Couriers retrieved successfully from cache","path":"/api/admin/couriers","status":200,"time":"2025-02-07T06:50:20Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
 {"fields.time":"3.159974ms","level":"info","method":"GET","msg":"Users retrieved successfully from database","path":"/api/admin/users","status":200,"time":"2025-02-07T06:51:23Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
 {"fields.time":"1.566385ms","level":"info","method":"GET","msg":"Users retrieved successfully from cache","path":"/api/admin/users","status":200,"time":"2025-02-07T06:51:30Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-04T16:45:08Z"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T20:38:29Z"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T20:44:56Z"}
+{"fields.time":"96.816769ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T20:44:58Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"97.469426ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T20:45:00Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"91.24014ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T20:45:01Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"94.666499ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T20:45:02Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"error":"record not found","fields.time":"1.834282ms","level":"warning","method":"POST","msg":"Invalid email or password","path":"/api/auth/login","status":404,"time":"2025-05-07T20:51:38Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"97.117863ms","level":"info","method":"POST","msg":"User registered successfully","path":"/api/auth/register","status":201,"time":"2025-05-07T20:51:52Z","userID":"7a3eaf8d-8363-4977-b58e-e971875da1d9"}
+{"error":"record not found","fields.time":"1.713659ms","level":"warning","method":"POST","msg":"Invalid email or password","path":"/api/auth/login","status":404,"time":"2025-05-07T20:52:18Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"error":"record not found","fields.time":"1.288908ms","level":"warning","method":"POST","msg":"Invalid email or password","path":"/api/auth/login","status":404,"time":"2025-05-07T20:52:36Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"114.109195ms","level":"info","method":"POST","msg":"User registered successfully","path":"/api/auth/register","status":201,"time":"2025-05-07T20:53:06Z","userID":"4d49a8de-de96-4e55-bf94-dccd08c32f60"}
+{"fields.time":"110.680881ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T20:53:12Z","userID":"4d49a8de-de96-4e55-bf94-dccd08c32f60"}
+{"fields.time":"15.924507ms","level":"info","method":"POST","msg":"User logged out successfully","path":"/api/auth/logout","status":200,"time":"2025-05-07T20:53:22Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"error":"record not found","fields.time":"3.285088ms","level":"warning","method":"POST","msg":"Invalid email or password","path":"/api/auth/login","status":404,"time":"2025-05-07T21:09:48Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"94.496171ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T21:09:53Z","userID":"4d49a8de-de96-4e55-bf94-dccd08c32f60"}
+{"fields.time":"6.029531ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from database","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T21:09:53Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"2.320008ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T21:10:07Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"5.549249ms","level":"info","method":"POST","msg":"User logged out successfully","path":"/api/auth/logout","status":200,"time":"2025-05-07T21:11:21Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"158.102279ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T21:11:31Z","userID":"4d49a8de-de96-4e55-bf94-dccd08c32f60"}
+{"fields.time":"1.008076ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T21:11:31Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"1.215323ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T21:12:51Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"99.228615ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T21:13:17Z","userID":"4d49a8de-de96-4e55-bf94-dccd08c32f60"}
+{"fields.time":"724.614µs","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T21:13:17Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"741.329µs","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T21:14:42Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"4.149225ms","level":"info","method":"POST","msg":"User logged out successfully","path":"/api/auth/logout","status":200,"time":"2025-05-07T21:16:57Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"3.005391ms","level":"warning","method":"POST","msg":"User with nickname already exists","path":"/api/auth/register","status":400,"time":"2025-05-07T21:20:07Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T21:24:22Z"}
+{"fields.time":"112.107552ms","level":"info","method":"POST","msg":"User registered successfully","path":"/api/auth/register","status":201,"time":"2025-05-07T21:24:47Z","userID":"cd57ba5d-fe58-4c12-af26-a250d39f16b3"}
+{"fields.time":"98.228832ms","level":"info","method":"POST","msg":"User registered successfully","path":"/api/auth/register","status":201,"time":"2025-05-07T21:26:15Z","userID":"df06d4f4-7aaa-4c89-b10c-8e90d24708d5"}
+{"fields.time":"1.332802ms","level":"warning","method":"POST","msg":"Email already exists","path":"/api/auth/register","status":400,"time":"2025-05-07T21:27:23Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"2.824297ms","level":"warning","method":"POST","msg":"Nickname already exists","path":"/api/auth/register","status":400,"time":"2025-05-07T21:27:34Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T21:30:22Z"}
+{"error":"record not found","fields.time":"6.620021ms","level":"warning","method":"POST","msg":"Email not found","path":"/api/auth/login","status":401,"time":"2025-05-07T21:30:31Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"error":"record not found","fields.time":"1.882435ms","level":"warning","method":"POST","msg":"Email not found","path":"/api/auth/login","status":401,"time":"2025-05-07T21:30:34Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"error":"record not found","fields.time":"1.656249ms","level":"warning","method":"POST","msg":"Email not found","path":"/api/auth/login","status":401,"time":"2025-05-07T21:30:59Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"error":"record not found","fields.time":"1.602896ms","level":"warning","method":"POST","msg":"Email not found","path":"/api/auth/login","status":401,"time":"2025-05-07T21:31:02Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"error":"record not found","fields.time":"2.51757ms","level":"warning","method":"POST","msg":"Email not found","path":"/api/auth/login","status":401,"time":"2025-05-07T21:31:23Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"88.559597ms","level":"info","method":"POST","msg":"User registered successfully","path":"/api/auth/register","status":201,"time":"2025-05-07T21:31:38Z","userID":"1c5b00b8-99bb-4400-a741-2e856a05bef1"}
+{"fields.time":"93.473211ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T21:31:45Z","userID":"1c5b00b8-99bb-4400-a741-2e856a05bef1"}
+{"fields.time":"2.680651ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from database","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T21:31:45Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"error":"record not found","fields.time":"1.142218ms","level":"warning","method":"POST","msg":"Email not found","path":"/api/auth/login","status":401,"time":"2025-05-07T21:32:09Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"error":"record not found","fields.time":"1.564391ms","level":"warning","method":"POST","msg":"Email not found","path":"/api/auth/login","status":401,"time":"2025-05-07T21:32:12Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"100.436582ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T21:32:32Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"601.789µs","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T21:32:32Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"1.350056ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T21:33:26Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T21:47:59Z"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T21:48:13Z"}
+{"fields.time":"92.21231ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T21:49:20Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"2.798125ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from database","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T21:49:20Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"90.80999ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T21:53:22Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"1.162819ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T21:53:22Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"14.310987ms","level":"info","method":"POST","msg":"User logged out successfully","path":"/api/auth/logout","status":200,"time":"2025-05-07T21:58:35Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"95.901959ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T22:00:05Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"4.19274ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from database","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T22:00:05Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T22:04:02Z"}
+{"fields.time":"96.351321ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T22:04:29Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"2.763906ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T22:04:29Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T22:05:50Z"}
+{"fields.time":"101.04181ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T22:05:55Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"error":"ERROR: relation \"dishes\" does not exist (SQLSTATE 42P01)","fields.time":"2.471672ms","level":"error","method":"GET","msg":"Error fetching dishes","path":"/api/restaurants/menu","status":500,"time":"2025-05-07T22:05:55Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"101.48912ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T22:06:05Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"error":"ERROR: relation \"dishes\" does not exist (SQLSTATE 42P01)","fields.time":"2.033128ms","level":"error","method":"GET","msg":"Error fetching dishes","path":"/api/restaurants/menu","status":500,"time":"2025-05-07T22:06:05Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T22:07:25Z"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T22:07:53Z"}
+{"fields.time":"96.634399ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T22:08:20Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"3.135797ms","level":"warning","method":"GET","msg":"No dishes found","path":"/api/restaurants/menu","status":404,"time":"2025-05-07T22:08:20Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T22:09:38Z"}
+{"fields.time":"1.514153ms","level":"warning","method":"GET","msg":"No dishes found","path":"/api/restaurants/menu","status":404,"time":"2025-05-07T22:09:59Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"error":"record not found","fields.time":"2.857238ms","level":"warning","method":"GET","msg":"Dish not found","path":"/api/restaurants/menu/91642ba0-fa12-4bfb-987f-4930fbcd871f","status":404,"time":"2025-05-07T22:10:03Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"96.266754ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T22:10:13Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"3.937252ms","level":"info","method":"GET","msg":"Couriers retrieved successfully from database","path":"/api/admin/couriers","status":200,"time":"2025-05-07T22:10:32Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T22:11:45Z"}
+{"fields.time":"3.531048ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from database","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T22:11:47Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"fields.time":"96.323342ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T22:12:04Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"886.995µs","level":"info","method":"GET","msg":"Dishes retrieved successfully from cache","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T22:12:04Z","userID":"00000000-0000-0000-0000-000000000000"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T22:22:34Z"}
+{"level":"info","msg":"Сервер запущен успешно","time":"2025-05-07T22:22:41Z"}
+{"fields.time":"100.465559ms","level":"info","method":"POST","msg":"User logged in successfully","path":"/api/auth/login","status":200,"time":"2025-05-07T22:22:55Z","userID":"63e0de53-9cd1-4017-b352-26f028148145"}
+{"fields.time":"4.13944ms","level":"info","method":"GET","msg":"Dishes retrieved successfully from database","path":"/api/restaurants/menu","status":200,"time":"2025-05-07T22:22:55Z","userID":"00000000-0000-0000-0000-000000000000"}

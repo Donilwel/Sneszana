@@ -2,6 +2,7 @@ import { useState } from "react";
 import Register from "./Register";
 import Login from "./Login";
 import Logout from "./Logout";
+import Dishes from "./Dishes.jsx";
 
 function App() {
     const [token, setToken] = useState("");
@@ -13,6 +14,8 @@ function App() {
                 <>
                     <p>Welcome, authenticated user</p>
                     <Logout token={token} onLogout={() => setToken("")} />
+                    <hr />
+                    <Dishes token={token} />
                 </>
             ) : (
                 <>

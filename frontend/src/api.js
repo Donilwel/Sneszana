@@ -24,3 +24,12 @@ export async function logout(token) {
         },
     });
 }
+
+export async function getDishes(token) {
+    return await fetch("/api/restaurants/menu", {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+}

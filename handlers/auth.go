@@ -6,6 +6,7 @@ import (
 	"Sneszana/models"
 	"Sneszana/utils"
 	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
@@ -26,32 +27,32 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, err, startTime, "Invalid request body")
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "Некорректное тело запроса")
 		return
 	}
 
 	if input.Name == "" || input.Email == "" || input.PhoneNumber == "" || input.Password == "" {
-		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, nil, startTime, "Missing required fields in request body")
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, nil, startTime, "Missing required fields")
+		writeJSONError(w, http.StatusBadRequest, "Заполните все поля")
 		return
 	}
 
 	if migrations.DB.Where("email = ?", input.Email).First(&models.User{}).Error == nil {
-		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, nil, startTime, "User with email already exists")
-		http.Error(w, "User with email already exists", http.StatusBadRequest)
+		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, nil, startTime, "Email already exists")
+		writeJSONError(w, http.StatusBadRequest, "Пользователь с таким email уже существует")
 		return
 	}
 
 	if migrations.DB.Where("name = ?", input.Name).First(&models.User{}).Error == nil {
-		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, nil, startTime, "User with nickname already exists")
-		http.Error(w, "User with nickname "+input.Name+" already exists", http.StatusBadRequest)
+		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, nil, startTime, "Nickname already exists")
+		writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("Имя пользователя %s уже занято", input.Name))
 		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
 		logging.LogRequest(logrus.ErrorLevel, uuid.Nil, r, http.StatusInternalServerError, err, startTime, "Failed to hash password")
-		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "Не удалось зашифровать пароль")
 		return
 	}
 
@@ -64,14 +65,24 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := migrations.DB.Create(&user).Error; err != nil {
 		logging.LogRequest(logrus.ErrorLevel, user.ID, r, http.StatusInternalServerError, err, startTime, "Failed to create user")
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "Не удалось создать пользователя")
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	utils.JSONFormat(w, r, user)
-	utils.JSONFormat(w, r, map[string]string{"message": "User registered successfully"})
+	utils.JSONFormat(w, r, map[string]string{"message": "Пользователь успешно зарегистрирован"})
 	logging.LogRequest(logrus.InfoLevel, user.ID, r, http.StatusCreated, nil, startTime, "User registered successfully")
+}
+
+func JSONFormat(w http.ResponseWriter, r *http.Request, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
+}
+
+func writeJSONError(w http.ResponseWriter, statusCode int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	_ = json.NewEncoder(w).Encode(map[string]string{"message": message})
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -84,33 +95,33 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, err, startTime, "Invalid request body")
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		utils.WriteJSONError(w, http.StatusBadRequest, "Некорректное тело запроса")
 		return
 	}
 
 	if input.Email == "" || input.Password == "" {
-		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, nil, startTime, "Email or password is empty")
-		http.Error(w, "Email or password is empty", http.StatusBadRequest)
+		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, nil, startTime, "Missing email or password")
+		utils.WriteJSONError(w, http.StatusBadRequest, "Email и пароль обязательны")
 		return
 	}
 
 	var user models.User
 	if err := migrations.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
-		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusNotFound, err, startTime, "Invalid email or password")
-		http.Error(w, "Invalid email or password", http.StatusNotFound)
+		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusUnauthorized, err, startTime, "Email not found")
+		utils.WriteJSONError(w, http.StatusUnauthorized, "Неверный email или пароль")
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
-		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusNotFound, err, startTime, "Invalid email or password")
-		http.Error(w, "Invalid email or password", http.StatusNotFound)
+		logging.LogRequest(logrus.WarnLevel, user.ID, r, http.StatusUnauthorized, err, startTime, "Invalid password")
+		utils.WriteJSONError(w, http.StatusUnauthorized, "Неверный email или пароль")
 		return
 	}
 
 	token, err := utils.GenerateJWT(user.ID, user.Email)
 	if err != nil {
 		logging.LogRequest(logrus.ErrorLevel, user.ID, r, http.StatusInternalServerError, err, startTime, "Failed to generate JWT")
-		http.Error(w, "Failed to generate JWT", http.StatusInternalServerError)
+		utils.WriteJSONError(w, http.StatusInternalServerError, "Ошибка генерации токена")
 		return
 	}
 

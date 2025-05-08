@@ -21,16 +21,16 @@ func main() {
 	migrations.InitDB()
 	config.InitRedis()
 
-	err := migrations.DB.Migrator().DropTable(&models.Dish{})
-	if err != nil {
-		log.Fatalf("Не удалось дропнуть таблицу: %v", err)
-	}
-
-	// 2. Создаём таблицу заново (с Category)
-	err = migrations.DB.AutoMigrate(&models.Dish{})
-	if err != nil {
-		log.Fatalf("Не удалось выполнить миграцию: %v", err)
-	}
+	//err := migrations.DB.Migrator().DropTable(&models.Dish{})
+	//if err != nil {
+	//	log.Fatalf("Не удалось дропнуть таблицу: %v", err)
+	//}
+	//
+	//// 2. Создаём таблицу заново (с Category)
+	//err := migrations.DB.AutoMigrate(&models.Dish{})
+	//if err != nil {
+	//	log.Fatalf("Не удалось выполнить миграцию: %v", err)
+	//}
 	//restaurantID := uuid.MustParse("029c4df8-4c4f-488e-9a96-1a4fe54acc18")
 	//dishes := []models.Dish{
 	//	{
@@ -168,7 +168,7 @@ func main() {
 	ordersRouter.Use(utils.AuthMiddleware(models.CUSTOMER_ROLE))
 	ordersRouter.HandleFunc("/", handlers.ShowOrderHandler).Methods("GET")
 	ordersRouter.HandleFunc("/", handlers.CreateOrderHandler).Methods("POST")
-	ordersRouter.HandleFunc("/", handlers.DeleteOrderHandler).Methods("DELETE")
+	ordersRouter.HandleFunc("/{orderId}", handlers.DeleteOrderHandler).Methods("DELETE")
 	ordersRouter.HandleFunc("/{orderId}", handlers.ShowInformationAboutOrderHandler).Methods("GET")
 	ordersRouter.HandleFunc("/add/{id}", handlers.AddToBucketHandler).Methods("POST")
 	//ordersRouter.HandleFunc("/reviews/courier/{id}", handlers.SetReviewOnCourierHandler).Methods("POST")

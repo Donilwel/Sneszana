@@ -425,6 +425,21 @@ func SetReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
 
 func DeleteOrderHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
+
+	orderIDStr := mux.Vars(r)["orderId"]
+	if orderIDStr == "" {
+		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, nil, startTime, "Missing order ID in request")
+		http.Error(w, "Missing order ID", http.StatusBadRequest)
+		return
+	}
+
+	orderID, err := uuid.Parse(orderIDStr)
+	if err != nil {
+		logging.LogRequest(logrus.WarnLevel, uuid.Nil, r, http.StatusBadRequest, err, startTime, "Invalid order ID format")
+		http.Error(w, "Invalid order ID format", http.StatusBadRequest)
+		return
+	}
+
 	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusUnauthorized, nil, startTime, "Invalid or missing user ID")
@@ -442,7 +457,7 @@ func DeleteOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var order models.Order
-	if err := tx.Where("user_id = ? AND status = 'created'", userID).First(&order).Error; err != nil {
+	if err := tx.Where("id = ? AND status = 'created'", orderID).First(&order).Error; err != nil {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Order not found for user")
 		http.Error(w, "Order not found", http.StatusNotFound)
 		return

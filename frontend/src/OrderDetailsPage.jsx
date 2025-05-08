@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 export default function OrderDetailsPage({ token }) {
     const { orderId } = useParams();
     const [orderDetails, setOrderDetails] = useState(null);
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchOrderDetails = async () => {
@@ -24,6 +25,10 @@ export default function OrderDetailsPage({ token }) {
 
         fetchOrderDetails();
     }, [orderId, token]);
+
+    const handleCreateOrder = () => {
+        navigate("/create-order");
+    };
 
     if (error) return <p style={{ color: "red" }}>{error}</p>;
     if (!orderDetails) return <p>Загрузка данных...</p>;
@@ -51,10 +56,41 @@ export default function OrderDetailsPage({ token }) {
             <div style={totalStyle}>
                 <p><strong>Общая сумма: </strong>{orderDetails["total price"]} ₽</p>
             </div>
+            <div style={buttonContainerStyle}>
+                <button
+                    onClick={handleCreateOrder}
+                    style={orderButtonStyle}
+                >
+                    Оформить новый заказ
+                </button>
+            </div>
         </div>
     );
 }
 
+// Добавляем новые стили для кнопки
+const buttonContainerStyle = {
+    display: "flex",
+    justifyContent: "center",
+    marginTop: "2rem",
+};
+
+const orderButtonStyle = {
+    padding: "1rem 2rem",
+    backgroundColor: "#4CAF50",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    fontSize: "1rem",
+    fontWeight: "bold",
+    cursor: "pointer",
+    transition: "background-color 0.3s",
+    ":hover": {
+        backgroundColor: "#45a049",
+    },
+};
+
+// Остальные стили остаются без изменений
 const titleStyle = {
     textAlign: "center",
     fontSize: "2.5rem",

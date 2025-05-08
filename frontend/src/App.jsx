@@ -5,23 +5,23 @@ import Login from "./Login";
 import Logout from "./Logout";
 import Dishes from "./Dishes";
 import DishDetails from "./DishDetails";
-import Orders from "./Order"; // импортируем новый компонент
-import OrderDetailsPage from "./OrderDetailsPage"; // импортируем компонент для деталей заказа
+import Orders from "./Order";
+import OrderDetailsPage from "./OrderDetailsPage";
+import CreateOrderPage from "./CreateOrderPage"; // Импортируем новый компонент
 
 function App() {
-    const [token, setToken] = useState(localStorage.getItem("token") || ""); // получаем токен из localStorage
+    const [token, setToken] = useState(localStorage.getItem("token") || "");
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (token) {
-            localStorage.setItem("token", token); // сохраняем токен в localStorage
+            localStorage.setItem("token", token);
         } else {
-            localStorage.removeItem("token"); // удаляем токен при выходе
+            localStorage.removeItem("token");
         }
-        setLoading(false); // флаг завершения загрузки
+        setLoading(false);
     }, [token]);
 
-    // Переход в раздел авторизации, если токен отсутствует
     const PrivateRoute = ({ children }) => {
         return token ? children : <Navigate to="/" />;
     };
@@ -30,9 +30,9 @@ function App() {
         <Router>
             <div style={{ padding: "1rem" }}>
                 <h1>🍽 Vite Auth</h1>
-                {token && <Logout token={token} onLogout={() => setToken("")} />} {/* кнопка для выхода */}
+                {token && <Logout token={token} onLogout={() => setToken("")} />}
                 {loading ? (
-                    <p>Loading...</p> // выводим сообщение во время загрузки
+                    <p>Loading...</p>
                 ) : (
                     <Routes>
                         <Route
@@ -57,16 +57,24 @@ function App() {
                             path="/orders"
                             element={
                                 <PrivateRoute>
-                                    <Orders token={token} /> {/* защищённый маршрут для заказов */}
+                                    <Orders token={token} />
                                 </PrivateRoute>
                             }
                         />
-                        {/* Новый маршрут для деталей заказа */}
                         <Route
                             path="/order/:orderId"
                             element={
                                 <PrivateRoute>
                                     <OrderDetailsPage token={token} />
+                                </PrivateRoute>
+                            }
+                        />
+                        {/* Добавляем новый маршрут для создания заказа */}
+                        <Route
+                            path="/create-order"
+                            element={
+                                <PrivateRoute>
+                                    <CreateOrderPage token={token} />
                                 </PrivateRoute>
                             }
                         />

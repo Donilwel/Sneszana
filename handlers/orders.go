@@ -224,7 +224,7 @@ func CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Order start to cook")
 	w.WriteHeader(http.StatusOK)
 	response := map[string]interface{}{
-		"message": "Order start to cook. your checker code, show it courier for accept finish order",
+		"message": "Заказ начинаем готовить. Ваш код чека, покажите его курьеру для принятия и завершения заказа",
 		"code":    code,
 	}
 	utils.JSONFormat(w, r, response)
@@ -329,48 +329,48 @@ func SetReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	if !ok {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusUnauthorized, nil, startTime, "Invalid or missing user ID")
-		http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+		utils.WriteJSONError(w, http.StatusUnauthorized, "Invalid user ID") // Используем WriteJSONError
 		return
 	}
 
 	var user models.User
 	if err := migrations.DB.Where("id = ?", userID).First(&user).Error; err != nil {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "User not found")
-		http.Error(w, "User not found", http.StatusNotFound)
+		utils.WriteJSONError(w, http.StatusNotFound, "User not found") // Используем WriteJSONError
 		return
 	}
 
 	dishID, err := uuid.Parse(mux.Vars(r)["id"])
 	if err != nil {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Invalid dish ID format")
-		http.Error(w, "Invalid dish ID format", http.StatusBadRequest)
+		utils.WriteJSONError(w, http.StatusBadRequest, "Invalid dish ID format") // Используем WriteJSONError
 		return
 	}
 
 	var dish models.Dish
 	if err := migrations.DB.Where("id = ?", dishID).First(&dish).Error; err != nil {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Dish not found")
-		http.Error(w, "Dish not found", http.StatusNotFound)
+		utils.WriteJSONError(w, http.StatusNotFound, "Dish not found") // Используем WriteJSONError
 		return
 	}
 
 	var review models.Review
 	if err := json.NewDecoder(r.Body).Decode(&review); err != nil {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Invalid review JSON format")
-		http.Error(w, "Invalid review format", http.StatusBadRequest)
+		utils.WriteJSONError(w, http.StatusBadRequest, "Invalid review format") // Используем WriteJSONError
 		return
 	}
 
 	if review.Mark < 1 || review.Mark > 5 {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, startTime, "Invalid review mark (must be between 1 and 5)")
-		http.Error(w, "Mark must be between 1 and 5", http.StatusBadRequest)
+		utils.WriteJSONError(w, http.StatusBadRequest, "Mark must be between 1 and 5") // Используем WriteJSONError
 		return
 	}
 
 	review.TextMessage = strings.TrimSpace(review.TextMessage)
 	if review.TextMessage == "" {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, startTime, "Empty review text")
-		http.Error(w, "Review text cannot be empty", http.StatusBadRequest)
+		utils.WriteJSONError(w, http.StatusBadRequest, "Review text cannot be empty") // Используем WriteJSONError
 		return
 	}
 
@@ -387,14 +387,14 @@ func SetReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil || count == 0 {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusForbidden, err, startTime, "User has never ordered this dish")
-		http.Error(w, "You can only review dishes you have ordered", http.StatusForbidden)
+		utils.WriteJSONError(w, http.StatusForbidden, "You can only review dishes you have ordered") // Используем WriteJSONError
 		return
 	}
 
 	var existingReview models.Review
 	if err := tx.Where("user_id = ? AND dish_id = ?", userID, review.DishID).First(&existingReview).Error; err == nil {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusConflict, nil, startTime, "User already reviewed this dish")
-		http.Error(w, "You have already reviewed this dish", http.StatusConflict)
+		utils.WriteJSONError(w, http.StatusConflict, "You have already reviewed this dish") // Используем WriteJSONError
 		return
 	}
 
@@ -402,13 +402,13 @@ func SetReviewOnDishHandler(w http.ResponseWriter, r *http.Request) {
 	review.Status = models.CHECK
 	if err := tx.Create(&review).Error; err != nil {
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Failed to create review")
-		http.Error(w, "Failed to create review", http.StatusInternalServerError)
+		utils.WriteJSONError(w, http.StatusInternalServerError, "Failed to create review") // Используем WriteJSONError
 		return
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Transaction commit failed")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		utils.WriteJSONError(w, http.StatusInternalServerError, "Internal server error") // Используем WriteJSONError
 		return
 	}
 

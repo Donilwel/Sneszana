@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
+import './App.css';  // Импортируем стили
+
 import Register from "./Register";
 import Login from "./Login";
 import Logout from "./Logout";
@@ -7,7 +9,9 @@ import Dishes from "./Dishes";
 import DishDetails from "./DishDetails";
 import Orders from "./Order";
 import OrderDetailsPage from "./OrderDetailsPage";
-import CreateOrderPage from "./CreateOrderPage"; // Импортируем новый компонент
+import CreateOrderPage from "./CreateOrderPage";
+import DishReviews from "./DishReviews"; // Импортируем новый компонент
+import WriteReview from "./WriteReview"; // Импортируем компонент для написания отзыва
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem("token") || "");
@@ -29,7 +33,9 @@ function App() {
     return (
         <Router>
             <div style={{ padding: "1rem" }}>
-                <h1>🍽 Vite Auth</h1>
+                <h1>
+                    <Link to="/" className="header">🍽 Cнежана</Link>
+                </h1>
                 {token && <Logout token={token} onLogout={() => setToken("")} />}
                 {loading ? (
                     <p>Loading...</p>
@@ -54,6 +60,22 @@ function App() {
                             }
                         />
                         <Route
+                            path="/dish/:id/reviews"
+                            element={
+                                <PrivateRoute>
+                                    <DishReviews token={token} />
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route
+                            path="/dish/:id/write-review"
+                            element={
+                                <PrivateRoute>
+                                    <WriteReview token={token} />
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route
                             path="/orders"
                             element={
                                 <PrivateRoute>
@@ -69,7 +91,6 @@ function App() {
                                 </PrivateRoute>
                             }
                         />
-                        {/* Добавляем новый маршрут для создания заказа */}
                         <Route
                             path="/create-order"
                             element={

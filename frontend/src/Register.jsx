@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { register } from "./api";
 
 export default function Register() {
@@ -10,6 +11,7 @@ export default function Register() {
     });
     const [msg, setMsg] = useState("");
     const [isError, setIsError] = useState(false);
+    const navigate = useNavigate();
 
     const handleChange = (e) =>
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -77,6 +79,12 @@ export default function Register() {
                     {msg}
                 </p>
             )}
+            <p style={{ textAlign: "center" }}>
+                Уже есть аккаунт?{" "}
+                <button type="button" onClick={() => navigate("/")} style={linkBtn}>
+                    Войти
+                </button>
+            </p>
         </form>
     );
 }
@@ -110,6 +118,16 @@ const buttonStyle = {
     borderRadius: "6px",
     fontSize: "1rem",
     cursor: "pointer",
+};
+
+const linkBtn = {
+    background: "none",
+    border: "none",
+    color: "#007bff",
+    cursor: "pointer",
+    fontSize: "1rem",
+    textDecoration: "underline",
+    padding: 0,
 };
 
 const successStyle = {

@@ -66,14 +66,14 @@ func DishHandler(w http.ResponseWriter, r *http.Request) {
 	dishID := mux.Vars(r)["id"]
 	if _, err := uuid.Parse(dishID); err != nil {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Invalid dish ID format")
-		http.Error(w, "Invalid dish ID format", http.StatusBadRequest)
+		utils.WriteJSONError(w, http.StatusBadRequest, "Неверный формат ID блюда")
 		return
 	}
 
 	var dish models.Dish
 	if err := migrations.DB.Where("id = ?", dishID).First(&dish).Error; err != nil {
 		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusNotFound, err, startTime, "Dish not found")
-		http.Error(w, "Dish not found", http.StatusNotFound)
+		utils.WriteJSONError(w, http.StatusNotFound, "Блюдо не найдено")
 		return
 	}
 

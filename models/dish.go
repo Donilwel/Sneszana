@@ -10,4 +10,5 @@ type Dish struct {
 	ImageURL     string    `gorm:"type:varchar(255)"`
 	Ingredients  string    `gorm:"type:text"`
 	RestaurantID uuid.UUID `gorm:"not null"`
+	Category     string    `gorm:"type:varchar(50)"`
 }

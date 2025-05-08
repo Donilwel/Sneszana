@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { login } from "./api";
 
 export default function Login({ onLogin }) {
     const [form, setForm] = useState({ email: "", password: "" });
     const [msg, setMsg] = useState("");
     const [isError, setIsError] = useState(false);
+    const navigate = useNavigate();
 
     const handleChange = (e) =>
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -55,6 +57,12 @@ export default function Login({ onLogin }) {
             {msg && (
                 <p style={isError ? errorStyle : successStyle}>{msg}</p>
             )}
+            <p style={{ textAlign: "center" }}>
+                Нет аккаунта?{" "}
+                <button type="button" onClick={() => navigate("/register")} style={linkBtn}>
+                    Зарегистрироваться
+                </button>
+            </p>
         </form>
     );
 }
@@ -88,6 +96,16 @@ const buttonStyle = {
     borderRadius: "6px",
     fontSize: "1rem",
     cursor: "pointer",
+};
+
+const linkBtn = {
+    background: "none",
+    border: "none",
+    color: "#007bff",
+    cursor: "pointer",
+    fontSize: "1rem",
+    textDecoration: "underline",
+    padding: 0,
 };
 
 const successStyle = {

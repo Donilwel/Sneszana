@@ -118,7 +118,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := utils.GenerateJWT(user.ID, user.Email)
+	token, err := utils.GenerateJWT(user.ID, user.Email, user.Role)
 	if err != nil {
 		logging.LogRequest(logrus.ErrorLevel, user.ID, r, http.StatusInternalServerError, err, startTime, "Failed to generate JWT")
 		utils.WriteJSONError(w, http.StatusInternalServerError, "Ошибка генерации токена")

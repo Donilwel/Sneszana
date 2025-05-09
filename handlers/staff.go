@@ -15,7 +15,7 @@ import (
 
 func ShowCookingOrdersHandler(w http.ResponseWriter, r *http.Request) {
 	var orders []models.Order
-	if err := migrations.DB.Where("status = ?", models.COOKING).Find(&orders).Error; err != nil {
+	if err := migrations.DB.Preload("OrderItems").Where("status = ?", models.COOKING).Find(&orders).Error; err != nil {
 		log.Println("error, nothing to cooking")
 		http.Error(w, "error, nothing to cooking", http.StatusInternalServerError)
 		return

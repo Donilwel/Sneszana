@@ -17,6 +17,7 @@ import WriteReview from "./WriteReview";
 import AdminDashboard from "./AdminDashboard";
 import AdminUsers from "./AdminUsers";
 import AdminReviews from "./AdminReviews";
+import CookerDashboard from "./CookerDashboard";
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem("token") || "");
@@ -30,9 +31,13 @@ function App() {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 setUserRole(payload.role || "CUSTOMER_ROLE");
 
-                // Автоматический редирект для админа
-                if (payload.role === "ADMIN_ROLE" && window.location.pathname === "/") {
-                    window.location.href = "/admin";
+                // Автоматический редирект в зависимости от роли
+                if (window.location.pathname === "/") {
+                    if (payload.role === "ADMIN_ROLE") {
+                        navigate("/admin");
+                    } else if (payload.role === "COOKER_ROLE") {
+                        navigate("/cooker");
+                    }
                 }
             } catch (err) {
                 console.error("Token decoding error:", err);
@@ -44,24 +49,32 @@ function App() {
         setLoading(false);
     }, [token]);
 
-    // Route protection components
-    const PrivateRoute = ({ children }) => {
+    // Компоненты для защиты маршрутов
+    const PrivateRoute = ({ children, requiredRole }) => {
         if (!token) return <Navigate to="/login" replace />;
-        return children;
-    };
 
-    const AdminRoute = ({ children }) => {
-        if (!token) return <Navigate to="/login" replace />;
-        if (userRole !== "ADMIN_ROLE") {
+        // Проверка роли, если требуется
+        if (requiredRole && userRole !== requiredRole) {
             return (
                 <div className="access-denied">
                     <h2>Доступ запрещен</h2>
-                    <p>Требуются права администратора</p>
+                    <p>Требуются права {getRoleDisplayName(requiredRole)}</p>
                     <Link to="/" className="return-btn">На главную</Link>
                 </div>
             );
         }
+
         return children;
+    };
+
+    // Функция для отображения названия роли
+    const getRoleDisplayName = (role) => {
+        switch(role) {
+            case "ADMIN_ROLE": return "администратора";
+            case "COOKER_ROLE": return "повара";
+            case "COURIER_ROLE": return "курьера";
+            default: return "пользователя";
+        }
     };
 
     if (loading) {
@@ -72,7 +85,10 @@ function App() {
         <Router>
             <div className="app-container">
                 <header className="app-header">
-                    <Link to={userRole === "ADMIN_ROLE" ? "/admin" : "/"} className="app-logo">
+                    <Link to={
+                        userRole === "ADMIN_ROLE" ? "/admin" :
+                            userRole === "COOKER_ROLE" ? "/cooker" : "/"
+                    } className="app-logo">
                         <span role="img" aria-label="restaurant">🍽</span> Cнежана
                     </Link>
 
@@ -81,6 +97,11 @@ function App() {
                             {userRole === "ADMIN_ROLE" && window.location.pathname !== "/admin" && (
                                 <Link to="/admin" className="admin-link">
                                     Админ-панель
+                                </Link>
+                            )}
+                            {userRole === "COOKER_ROLE" && window.location.pathname !== "/cooker" && (
+                                <Link to="/cooker" className="admin-link">
+                                    Панель повара
                                 </Link>
                             )}
                             <Logout token={token} onLogout={() => setToken("")} />
@@ -95,6 +116,8 @@ function App() {
                             token ? (
                                 userRole === "ADMIN_ROLE" ? (
                                     <Navigate to="/admin" replace />
+                                ) : userRole === "COOKER_ROLE" ? (
+                                    <Navigate to="/cooker" replace />
                                 ) : (
                                     <Dishes token={token} />
                                 )
@@ -143,24 +166,31 @@ function App() {
 
                         {/* Admin routes */}
                         <Route path="/admin" element={
-                            <AdminRoute>
+                            <PrivateRoute requiredRole="ADMIN_ROLE">
                                 <AdminDashboard />
-                            </AdminRoute>
+                            </PrivateRoute>
                         } />
                         <Route path="/admin/users" element={
-                            <AdminRoute>
+                            <PrivateRoute requiredRole="ADMIN_ROLE">
                                 <AdminUsers token={token} />
-                            </AdminRoute>
+                            </PrivateRoute>
                         } />
                         <Route path="/admin/dishes" element={
-                            <AdminRoute>
+                            <PrivateRoute requiredRole="ADMIN_ROLE">
                                 <AdminDishes token={token} />
-                            </AdminRoute>
+                            </PrivateRoute>
                         } />
                         <Route path="/admin/reviews" element={
-                            <AdminRoute>
+                            <PrivateRoute requiredRole="ADMIN_ROLE">
                                 <AdminReviews token={token} />
-                            </AdminRoute>
+                            </PrivateRoute>
+                        } />
+
+                        {/* Cooker routes */}
+                        <Route path="/cooker" element={
+                            <PrivateRoute requiredRole="COOKER_ROLE">
+                                <CookerDashboard token={token} />
+                            </PrivateRoute>
                         } />
 
                         {/* Fallback route */}

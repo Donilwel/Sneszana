@@ -10,7 +10,7 @@ export default function AdminUsers({ token }) {
     const [newRole, setNewRole] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
 
-    const roles = ["ADMIN_ROLE", "COURIER_ROLE", "CUSTOMER_ROLE", "STAFF_ROLE"];
+    const roles = ["ADMIN_ROLE", "COURIER_ROLE", "CUSTOMER_ROLE", "COOKER_ROLE"];
     const rolesForFilter = ["all", ...roles];
 
     useEffect(() => {

@@ -94,12 +94,14 @@ export default function OrdersPage() {
                                 <Link to={`/order/${order.ID}`} style={buttonStyle}>
                                     View Order
                                 </Link>
-                                <button
-                                    onClick={() => handleDeleteOrder(order.ID)}
-                                    style={deleteButtonStyle}
-                                >
-                                    Delete Order
-                                </button>
+                                {order.Status === 'created' && (
+                                    <button
+                                        onClick={() => handleDeleteOrder(order.ID)}
+                                        style={deleteButtonStyle}
+                                    >
+                                        Delete Order
+                                    </button>
+                                )}
                             </div>
                         </li>
                     ))}

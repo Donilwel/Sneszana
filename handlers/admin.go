@@ -6,11 +6,11 @@ import (
 	"Sneszana/logging"
 	"Sneszana/models"
 	"Sneszana/utils"
+	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -214,17 +214,20 @@ func ChangePriceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	price := r.URL.Query().Get("price")
-	if price == "" {
-		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, startTime, "Missing price parameter")
-		http.Error(w, "Missing price parameter", http.StatusBadRequest)
+	// Читаем тело запроса
+	var requestBody struct {
+		Price float64 `json:"price"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Invalid request body")
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	newPrice, err := strconv.ParseFloat(price, 64)
-	if err != nil {
-		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, err, startTime, "Invalid price format")
-		http.Error(w, "Invalid price format", http.StatusBadRequest)
+	if requestBody.Price <= 0 {
+		logging.LogRequest(logrus.WarnLevel, userID, r, http.StatusBadRequest, nil, startTime, "Price must be positive")
+		http.Error(w, "Price must be positive", http.StatusBadRequest)
 		return
 	}
 
@@ -244,7 +247,7 @@ func ChangePriceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tx.Model(&dish).Update("price", newPrice).Error; err != nil {
+	if err := tx.Model(&dish).Update("price", requestBody.Price).Error; err != nil {
 		tx.Rollback()
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Error updating dish price")
 		http.Error(w, "Error updating dish price", http.StatusInternalServerError)
@@ -261,10 +264,6 @@ func ChangePriceHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Dish price updated successfully"))
 	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Dish price updated successfully")
-}
-
-func ChangeReviewsStatusHandler(w http.ResponseWriter, r *http.Request) {
-
 }
 
 func DeleteDishesHandler(w http.ResponseWriter, r *http.Request) {

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ token }) {
     // Стили в формате JS объектов
     const styles = {
         dashboard: {
@@ -17,9 +18,6 @@ export default function AdminDashboard() {
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
             gap: "1.5rem",
-            "@media (max-width: 768px)": {
-                gridTemplateColumns: "1fr",
-            },
         },
         card: {
             display: "block",
@@ -66,7 +64,51 @@ export default function AdminDashboard() {
                 backgroundColor: "#218838",
             },
         },
+        badge: {
+            position: "absolute",
+            top: "-8px",
+            right: "-8px",
+            backgroundColor: "#dc3545",
+            color: "white",
+            borderRadius: "50%",
+            width: "24px",
+            height: "24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "0.75rem",
+        },
+        cardContainer: {
+            position: "relative",
+        }
     };
+
+    const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
+
+    useEffect(() => {
+        const fetchPendingReviews = async () => {
+            try {
+                const response = await fetch('/api/admin/reviews?status=checking', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch pending reviews');
+                }
+
+                const data = await response.json();
+                setPendingReviewsCount(data.length);
+            } catch (error) {
+                console.error('Error fetching pending reviews:', error);
+            }
+        };
+
+        if (token) {
+            fetchPendingReviews();
+        }
+    }, [token]);
 
     return (
         <div style={styles.dashboard}>
@@ -82,6 +124,12 @@ export default function AdminDashboard() {
                 </Link>
                 <Link to="/admin/orders" style={styles.quickLink}>
                     Последние заказы
+                </Link>
+                <Link to="/admin/reviews" style={styles.quickLink}>
+                    Проверить отзывы
+                    {pendingReviewsCount > 0 && (
+                        <span style={styles.badge}>{pendingReviewsCount}</span>
+                    )}
                 </Link>
             </div>
 
@@ -104,6 +152,17 @@ export default function AdminDashboard() {
                     <h3 style={styles.cardTitle}>Управление заказами</h3>
                     <p style={styles.cardDescription}>Просмотр и управление всеми заказами</p>
                 </Link>
+
+                <div style={styles.cardContainer}>
+                    <Link to="/admin/reviews" style={styles.card}>
+                        <div style={styles.cardIcon}>📝</div>
+                        <h3 style={styles.cardTitle}>Управление отзывами</h3>
+                        <p style={styles.cardDescription}>Модерация и управление отзывами пользователей</p>
+                    </Link>
+                    {pendingReviewsCount > 0 && (
+                        <span style={styles.badge}>{pendingReviewsCount}</span>
+                    )}
+                </div>
 
                 <Link to="/admin/stats" style={styles.card}>
                     <div style={styles.cardIcon}>📊</div>

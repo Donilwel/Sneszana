@@ -7,6 +7,7 @@ import Register from "./Register";
 import Login from "./Login";
 import Logout from "./Logout";
 import Dishes from "./Dishes";
+import AdminDishes from "./AdminDishes";
 import DishDetails from "./DishDetails";
 import Orders from "./Order";
 import OrderDetailsPage from "./OrderDetailsPage";
@@ -15,6 +16,7 @@ import DishReviews from "./DishReviews";
 import WriteReview from "./WriteReview";
 import AdminDashboard from "./AdminDashboard";
 import AdminUsers from "./AdminUsers";
+import AdminReviews from "./AdminReviews";
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem("token") || "");
@@ -148,6 +150,16 @@ function App() {
                         <Route path="/admin/users" element={
                             <AdminRoute>
                                 <AdminUsers token={token} />
+                            </AdminRoute>
+                        } />
+                        <Route path="/admin/dishes" element={
+                            <AdminRoute>
+                                <AdminDishes token={token} />
+                            </AdminRoute>
+                        } />
+                        <Route path="/admin/reviews" element={
+                            <AdminRoute>
+                                <AdminReviews token={token} />
                             </AdminRoute>
                         } />
 

@@ -150,8 +150,8 @@ func main() {
 	apiRouter.HandleFunc("/ping", handlers.PingHandler).Methods("GET")
 
 	dishesRouter := apiRouter.PathPrefix("/dishes").Subrouter()
-	dishesRouter.HandleFunc("", handlers.ShowDishesHandler).Methods("GET")
-	dishesRouter.HandleFunc("/{id}", handlers.ShowDishByIDHandler).Methods("GET")
+	//dishesRouter.HandleFunc("", handlers.ShowDishesHandler).Methods("GET")
+	//dishesRouter.HandleFunc("/{id}", handlers.ShowDishByIDHandler).Methods("GET")
 	dishesRouter.HandleFunc("/{id}/reviews", handlers.ShowReviewsDishByIDHandler).Methods("GET")
 
 	authRouter := apiRouter.PathPrefix("/auth").Subrouter()
@@ -186,7 +186,8 @@ func main() {
 	adminRouter.HandleFunc("/dishes", handlers.ShowAllDishesHandler).Methods("GET")
 	adminRouter.HandleFunc("/dishes/{id}", handlers.ChangePriceHandler).Methods("PUT")
 	adminRouter.HandleFunc("/dishes/{id}", handlers.DeleteDishesHandler).Methods("DELETE")
-	//adminRouter.HandleFunc("/reviews", handlers.ShowReviewsStatusHandler).Methods("GET")
+	adminRouter.HandleFunc("/reviews", handlers.ShowReviewsStatusHandler).Methods("GET")
+	adminRouter.HandleFunc("/reviews/{id}", handlers.ShowReviewsDishByIDHandler).Methods("GET")
 	adminRouter.HandleFunc("/reviews/{id}", handlers.ChangeReviewsStatusHandler).Methods("PUT")
 
 	courierRouter := apiRouter.PathPrefix("/courier").Subrouter()

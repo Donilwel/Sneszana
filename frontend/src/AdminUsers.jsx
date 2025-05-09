@@ -8,6 +8,7 @@ export default function AdminUsers({ token }) {
     const [selectedRole, setSelectedRole] = useState("all");
     const [editingUserId, setEditingUserId] = useState(null);
     const [newRole, setNewRole] = useState("");
+    const [searchTerm, setSearchTerm] = useState("");
 
     const roles = ["ADMIN_ROLE", "COURIER_ROLE", "CUSTOMER_ROLE", "STAFF_ROLE"];
     const rolesForFilter = ["all", ...roles];
@@ -32,9 +33,12 @@ export default function AdminUsers({ token }) {
         fetchData();
     }, [token]);
 
-    const filtered = selectedRole === "all"
-        ? users
-        : users.filter(u => u.Role === selectedRole);
+    const filtered = users.filter(user => {
+        const matchesRole = selectedRole === "all" || user.Role === selectedRole;
+        const matchesSearch = user.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.Email.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesRole && matchesSearch;
+    });
 
     const handleUpdateRole = async (userId, username) => {
         if (!newRole) {
@@ -86,6 +90,16 @@ export default function AdminUsers({ token }) {
         <div style={{ padding: "2rem" }}>
             <h2 style={titleStyle}>👥 Управление пользователями</h2>
 
+            <div style={searchContainer}>
+                <input
+                    type="text"
+                    placeholder="Поиск по имени или email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={searchInput}
+                />
+            </div>
+
             <div style={categoryStyle}>
                 {rolesForFilter.map(role => (
                     <button
@@ -102,83 +116,87 @@ export default function AdminUsers({ token }) {
             </div>
 
             <div style={gridStyle}>
-                {filtered.map(user => (
-                    <div key={user.ID} style={cardStyle}>
-                        <div style={avatarContainer}>
-                            <div style={{
-                                ...avatarStyle,
-                                backgroundColor: getRoleColor(user.Role)
-                            }}>
-                                {user.Name.charAt(0).toUpperCase()}
+                {filtered.length > 0 ? (
+                    filtered.map(user => (
+                        <div key={user.ID} style={cardStyle}>
+                            <div style={avatarContainer}>
+                                <div style={{
+                                    ...avatarStyle,
+                                    backgroundColor: getRoleColor(user.Role)
+                                }}>
+                                    {user.Name.charAt(0).toUpperCase()}
+                                </div>
+                            </div>
+
+                            <div style={infoStyle}>
+                                <h3>{user.Name}</h3>
+                                <p style={detailText}><strong>Email:</strong> {user.Email}</p>
+                                <p style={detailText}><strong>Телефон:</strong> {user.PhoneNumber}</p>
+
+                                {editingUserId === user.ID ? (
+                                    <div style={roleEditContainer}>
+                                        <select
+                                            value={newRole}
+                                            onChange={(e) => setNewRole(e.target.value)}
+                                            style={roleSelect}
+                                        >
+                                            {roles.map(role => (
+                                                <option key={role} value={role}>
+                                                    {role.replace("_ROLE", "")}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div style={editButtons}>
+                                            <button
+                                                onClick={() => handleUpdateRole(user.ID, user.Name)}
+                                                style={saveButton}
+                                            >
+                                                Сохранить
+                                            </button>
+                                            <button
+                                                onClick={cancelEditing}
+                                                style={cancelButton}
+                                            >
+                                                Отмена
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p style={{
+                                            ...roleBadge,
+                                            backgroundColor: getRoleColor(user.Role)
+                                        }}>
+                                            {user.Role.replace("_ROLE", "")}
+                                        </p>
+                                        <div style={actionsStyle}>
+                                            <button
+                                                onClick={() => startEditing(user.ID, user.Role)}
+                                                style={actionBtn}
+                                            >
+                                                Изменить роль
+                                            </button>
+                                            <button
+                                                style={{
+                                                    ...actionBtn,
+                                                    backgroundColor: "#dc3545",
+                                                    ':hover': {
+                                                        backgroundColor: "#c82333",
+                                                    }
+                                                }}
+                                                onClick={() => handleDelete(user.ID)}
+                                            >
+                                                Удалить
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
-
-                        <div style={infoStyle}>
-                            <h3>{user.Name}</h3>
-                            <p style={detailText}><strong>Email:</strong> {user.Email}</p>
-                            <p style={detailText}><strong>Телефон:</strong> {user.PhoneNumber}</p>
-
-                            {editingUserId === user.ID ? (
-                                <div style={roleEditContainer}>
-                                    <select
-                                        value={newRole}
-                                        onChange={(e) => setNewRole(e.target.value)}
-                                        style={roleSelect}
-                                    >
-                                        {roles.map(role => (
-                                            <option key={role} value={role}>
-                                                {role.replace("_ROLE", "")}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div style={editButtons}>
-                                        <button
-                                            onClick={() => handleUpdateRole(user.ID, user.Name)}
-                                            style={saveButton}
-                                        >
-                                            Сохранить
-                                        </button>
-                                        <button
-                                            onClick={cancelEditing}
-                                            style={cancelButton}
-                                        >
-                                            Отмена
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <p style={{
-                                        ...roleBadge,
-                                        backgroundColor: getRoleColor(user.Role)
-                                    }}>
-                                        {user.Role.replace("_ROLE", "")}
-                                    </p>
-                                    <div style={actionsStyle}>
-                                        <button
-                                            onClick={() => startEditing(user.ID, user.Role)}
-                                            style={actionBtn}
-                                        >
-                                            Изменить роль
-                                        </button>
-                                        <button
-                                            style={{
-                                                ...actionBtn,
-                                                backgroundColor: "#dc3545",
-                                                ':hover': {
-                                                    backgroundColor: "#c82333",
-                                                }
-                                            }}
-                                            onClick={() => handleDelete(user.ID)}
-                                        >
-                                            Удалить
-                                        </button>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                ))}
+                    ))
+                ) : (
+                    <p style={noResultsStyle}>Пользователи не найдены</p>
+                )}
             </div>
         </div>
     );
@@ -362,4 +380,33 @@ const actionBtn = {
     ':hover': {
         backgroundColor: "#0056b3",
     },
+};
+
+const searchContainer = {
+    display: "flex",
+    justifyContent: "center",
+    marginBottom: "1.5rem"
+};
+
+const searchInput = {
+    padding: "0.5rem 1rem",
+    width: "100%",
+    maxWidth: "500px",
+    borderRadius: "20px",
+    border: "1px solid #ddd",
+    fontSize: "1rem",
+    outline: "none",
+    transition: "all 0.2s ease",
+    ':focus': {
+        borderColor: "#007bff",
+        boxShadow: "0 0 0 0.2rem rgba(0,123,255,.25)"
+    }
+};
+
+const noResultsStyle = {
+    textAlign: "center",
+    gridColumn: "1 / -1",
+    color: "#6c757d",
+    fontSize: "1.2rem",
+    marginTop: "2rem"
 };

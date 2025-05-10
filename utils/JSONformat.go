@@ -13,7 +13,7 @@ func JSONFormat(w http.ResponseWriter, r *http.Request, v interface{}) {
 		http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
 		return
 	}
-
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(formattedJSON)
 	if err != nil {

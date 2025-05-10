@@ -15,6 +15,7 @@ import (
 )
 
 func ShowAllCouriersHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	startTime := time.Now()
 	userID, _ := r.Context().Value("userID").(uuid.UUID)
 	status := r.URL.Query().Get("status")

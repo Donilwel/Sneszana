@@ -37,6 +37,12 @@ func ShowReviewsStatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(reviews) == 0 {
+		logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusNotFound, nil, startTime, "No reviews found")
+		http.Error(w, "No reviews found", http.StatusNotFound)
+		return
+	}
+
 	type ReviewResponse struct {
 		ID          uuid.UUID `json:"id"`
 		UserName    string    `json:"user_name"`

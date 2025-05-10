@@ -37,11 +37,15 @@ const AdminReviews = ({ token }) => {
                     throw new Error(data.message || 'Ошибка при загрузке отзывов');
                 }
 
-                setReviews(data);
-                setError('');
+                if (data.length === 0) {
+                    setError('Отзывов не найдено');
+                } else {
+                    setReviews(data);
+                    setError('');
+                }
             } catch (err) {
                 console.error('Ошибка загрузки:', err);
-                setError(err.message);
+                setError(err.message || 'Произошла ошибка при загрузке отзывов');
             } finally {
                 setLoading(false);
             }
@@ -98,7 +102,6 @@ const AdminReviews = ({ token }) => {
     );
 
     if (loading) return <div style={styles.loading}>Загрузка отзывов...</div>;
-    if (error) return <div style={styles.error}>Ошибка: {error}</div>;
 
     return (
         <div style={styles.container}>
@@ -123,8 +126,10 @@ const AdminReviews = ({ token }) => {
                 </Link>
             </div>
 
-            {reviews.length === 0 ? (
-                <div style={styles.empty}>Отзывы не найдены</div>
+            {error && <div style={styles.error}>Ошибка: {error}</div>}
+
+            {!error && reviews.length === 0 ? (
+                <div style={styles.empty}>Отзывов не найдено</div>
             ) : (
                 <div style={styles.tableContainer}>
                     <table style={styles.table}>
@@ -180,7 +185,7 @@ const AdminReviews = ({ token }) => {
     );
 };
 
-// Вынесенные стили для лучшей читаемости
+// Стили компонента
 const styles = {
     container: {
         maxWidth: '1200px',

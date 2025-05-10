@@ -160,7 +160,7 @@ func main() {
 	authRouter.HandleFunc("/logout", handlers.LogoutHandler).Methods("POST")
 
 	kitchenRouter := apiRouter.PathPrefix("/kitchen").Subrouter()
-	//kitchenRouter.Use(utils.AuthMiddleware(models.STAFF_ROLE))
+	kitchenRouter.Use(utils.AuthMiddleware(models.STAFF_ROLE))
 	kitchenRouter.HandleFunc("/{id}", handlers.ChangeStaffStatusOrderHandler).Methods("POST")
 	kitchenRouter.HandleFunc("/", handlers.ShowCookingOrdersHandler).Methods("GET")
 

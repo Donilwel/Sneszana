@@ -41,22 +41,24 @@ const CookerDashboard = ({ token }) => {
     // Изменение статуса заказа
     const updateOrderStatus = async (orderId, newStatus) => {
         try {
-            const response = await fetch(`/api/kitchen/${orderId}/status`, {
-                method: 'PUT',
+            // Исправлено: используем query параметр вместо тела запроса
+            const response = await fetch(`/api/kitchen/${orderId}?status=${newStatus}`, {
+                method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ status: newStatus })
+                }
             });
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // Обновляем локальное состояние без повторного запроса
+            const updatedOrder = await response.json();
+
+            // Обновляем локальное состояние
             setOrders(orders.map(order =>
-                order.ID === orderId ? { ...order, Status: newStatus } : order
+                order.ID === orderId ? updatedOrder : order
             ));
         } catch (err) {
             setError(`Ошибка обновления статуса: ${err.message}`);
@@ -133,22 +135,24 @@ const CookerDashboard = ({ token }) => {
                                 <div className="order-header">
                                     <h3>Заказ #{order.ID.split('-')[0]}</h3>
                                     <span className={`status-badge ${order.Status}`}>
-                    {order.Status === 'cooking' ? 'В приготовлении' : order.Status}
-                  </span>
+                                        {order.Status === 'cooking' ? 'В приготовлении' :
+                                            order.Status === 'wait_free_courier' ? 'Ожидает курьера' :
+                                                order.Status === 'canceled' ? 'Отменен' : order.Status}
+                                    </span>
                                 </div>
 
                                 <div className="order-meta">
                                     <p><strong>Создан:</strong> {formatDate(order.CreatedAt)}</p>
                                     <p><strong>Обновлен:</strong> {formatDate(order.UpdatedAt)}</p>
-                                    <p><strong>Сумма:</strong> {order.Price.toLocaleString()} ₽</p>
+                                    {order.Price && <p><strong>Сумма:</strong> {order.Price.toLocaleString()} ₽</p>}
                                 </div>
 
                                 <div className="order-items">
                                     <h4>Состав заказа:</h4>
                                     <ul>
-                                        {order.OrderItems.map(item => (
+                                        {order.OrderItems && order.OrderItems.map(item => (
                                             <li key={item.ID}>
-                                                <span className="item-name">Блюдо #{item.DishID.split('-')[0]}</span>
+                                                <span className="item-name">Блюдо #{item.DishID?.split('-')[0] || 'N/A'}</span>
                                                 <span className="item-count">×{item.Count}</span>
                                             </li>
                                         ))}
@@ -157,7 +161,7 @@ const CookerDashboard = ({ token }) => {
 
                                 <div className="order-actions">
                                     <button
-                                        onClick={() => updateOrderStatus(order.ID, 'ready')}
+                                        onClick={() => updateOrderStatus(order.ID, 'waitfreecourier')}
                                         className="action-btn ready-btn"
                                         disabled={order.Status !== 'cooking'}
                                     >
@@ -166,7 +170,7 @@ const CookerDashboard = ({ token }) => {
                                     <button
                                         onClick={() => {
                                             if (window.confirm('Вы уверены, что хотите отменить этот заказ?')) {
-                                                updateOrderStatus(order.ID, 'canceled');
+                                                updateOrderStatus(order.ID, 'cancelled');
                                             }
                                         }}
                                         className="action-btn cancel-btn"
@@ -182,236 +186,246 @@ const CookerDashboard = ({ token }) => {
             </div>
 
             <style jsx>{`
-        .cooker-dashboard {
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 20px;
-          font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-          color: #333;
-        }
+                .cooker-dashboard {
+                    max-width: 1400px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                    color: #333;
+                }
 
-        .dashboard-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 30px;
-          padding-bottom: 15px;
-          border-bottom: 1px solid #eaeaea;
-        }
+                .dashboard-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 30px;
+                    padding-bottom: 15px;
+                    border-bottom: 1px solid #eaeaea;
+                }
 
-        .header-controls {
-          display: flex;
-          gap: 15px;
-        }
+                .header-controls {
+                    display: flex;
+                    gap: 15px;
+                }
 
-        .refresh-btn {
-          padding: 8px 12px;
-          background: #f0f0f0;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 16px;
-          transition: all 0.2s;
-        }
+                .refresh-btn {
+                    padding: 8px 12px;
+                    background: #f0f0f0;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    transition: all 0.2s;
+                }
 
-        .refresh-btn:hover {
-          background: #e0e0e0;
-          transform: rotate(90deg);
-        }
+                .refresh-btn:hover {
+                    background: #e0e0e0;
+                    transform: rotate(90deg);
+                }
 
-        .logout-btn {
-          padding: 8px 16px;
-          background-color: #ff4444;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
+                .logout-btn {
+                    padding: 8px 16px;
+                    background-color: #ff4444;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    transition: background-color 0.2s;
+                }
 
-        .logout-btn:hover {
-          background-color: #cc0000;
-        }
+                .logout-btn:hover {
+                    background-color: #cc0000;
+                }
 
-        .orders-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-          gap: 25px;
-        }
+                .orders-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+                    gap: 25px;
+                }
 
-        .order-card {
-          border: 1px solid #e0e0e0;
-          border-radius: 10px;
-          padding: 20px;
-          background: white;
-          box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
+                .order-card {
+                    border: 1px solid #e0e0e0;
+                    border-radius: 10px;
+                    padding: 20px;
+                    background: white;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                }
 
-        .order-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
+                .order-card:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                }
 
-        .order-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 15px;
-          padding-bottom: 10px;
-          border-bottom: 1px solid #f5f5f5;
-        }
+                .order-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 15px;
+                    padding-bottom: 10px;
+                    border-bottom: 1px solid #f5f5f5;
+                }
 
-        .order-header h3 {
-          margin: 0;
-          color: #2c3e50;
-          font-size: 18px;
-        }
+                .order-header h3 {
+                    margin: 0;
+                    color: #2c3e50;
+                    font-size: 18px;
+                }
 
-        .status-badge {
-          padding: 5px 12px;
-          border-radius: 15px;
-          font-size: 12px;
-          font-weight: 600;
-          text-transform: uppercase;
-        }
+                .status-badge {
+                    padding: 5px 12px;
+                    border-radius: 15px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                }
 
-        .status-badge.cooking {
-          background-color: #fff8e1;
-          color: #ff8f00;
-        }
+                .status-badge.cooking {
+                    background-color: #fff8e1;
+                    color: #ff8f00;
+                }
 
-        .order-meta {
-          margin-bottom: 15px;
-        }
+                .status-badge.wait_free_courier {
+                    background-color: #e3f2fd;
+                    color: #1976d2;
+                }
 
-        .order-meta p {
-          margin: 5px 0;
-          font-size: 14px;
-          color: #555;
-        }
+                .status-badge.canceled {
+                    background-color: #ffebee;
+                    color: #d32f2f;
+                }
 
-        .order-items {
-          margin: 20px 0;
-        }
+                .order-meta {
+                    margin-bottom: 15px;
+                }
 
-        .order-items h4 {
-          margin: 0 0 10px 0;
-          font-size: 16px;
-          color: #333;
-        }
+                .order-meta p {
+                    margin: 5px 0;
+                    font-size: 14px;
+                    color: #555;
+                }
 
-        .order-items ul {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
+                .order-items {
+                    margin: 20px 0;
+                }
 
-        .order-items li {
-          display: flex;
-          justify-content: space-between;
-          padding: 8px 0;
-          border-bottom: 1px dashed #eee;
-        }
+                .order-items h4 {
+                    margin: 0 0 10px 0;
+                    font-size: 16px;
+                    color: #333;
+                }
 
-        .item-name {
-          font-weight: 500;
-        }
+                .order-items ul {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
 
-        .item-count {
-          color: #666;
-        }
+                .order-items li {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 0;
+                    border-bottom: 1px dashed #eee;
+                }
 
-        .order-actions {
-          display: flex;
-          gap: 10px;
-          margin-top: 20px;
-        }
+                .item-name {
+                    font-weight: 500;
+                }
 
-        .action-btn {
-          flex: 1;
-          padding: 10px;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
-          transition: all 0.2s;
-        }
+                .item-count {
+                    color: #666;
+                }
 
-        .action-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
+                .order-actions {
+                    display: flex;
+                    gap: 10px;
+                    margin-top: 20px;
+                }
 
-        .ready-btn {
-          background-color: #4caf50;
-          color: white;
-        }
+                .action-btn {
+                    flex: 1;
+                    padding: 10px;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                }
 
-        .ready-btn:not(:disabled):hover {
-          background-color: #3d8b40;
-        }
+                .action-btn:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
 
-        .cancel-btn {
-          background-color: #f44336;
-          color: white;
-        }
+                .ready-btn {
+                    background-color: #4caf50;
+                    color: white;
+                }
 
-        .cancel-btn:not(:disabled):hover {
-          background-color: #d32f2f;
-        }
+                .ready-btn:not(:disabled):hover {
+                    background-color: #3d8b40;
+                }
 
-        .loading-screen {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 60vh;
-        }
+                .cancel-btn {
+                    background-color: #f44336;
+                    color: white;
+                }
 
-        .spinner {
-          border: 4px solid rgba(0, 0, 0, 0.1);
-          border-radius: 50%;
-          border-top: 4px solid #3498db;
-          width: 40px;
-          height: 40px;
-          animation: spin 1s linear infinite;
-          margin-bottom: 20px;
-        }
+                .cancel-btn:not(:disabled):hover {
+                    background-color: #d32f2f;
+                }
 
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
+                .loading-screen {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 60vh;
+                }
 
-        .error-screen {
-          text-align: center;
-          padding: 40px;
-          color: #d32f2f;
-          background-color: #ffebee;
-          border-radius: 5px;
-          margin: 20px;
-        }
+                .spinner {
+                    border: 4px solid rgba(0, 0, 0, 0.1);
+                    border-radius: 50%;
+                    border-top: 4px solid #3498db;
+                    width: 40px;
+                    height: 40px;
+                    animation: spin 1s linear infinite;
+                    margin-bottom: 20px;
+                }
 
-        .error-screen button {
-          margin-top: 15px;
-          padding: 8px 16px;
-          background-color: #d32f2f;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-        }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
 
-        .no-orders {
-          text-align: center;
-          padding: 40px;
-          background-color: #f5f5f5;
-          border-radius: 5px;
-          color: #666;
-        }
-      `}</style>
+                .error-screen {
+                    text-align: center;
+                    padding: 40px;
+                    color: #d32f2f;
+                    background-color: #ffebee;
+                    border-radius: 5px;
+                    margin: 20px;
+                }
+
+                .error-screen button {
+                    margin-top: 15px;
+                    padding: 8px 16px;
+                    background-color: #d32f2f;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+
+                .no-orders {
+                    text-align: center;
+                    padding: 40px;
+                    background-color: #f5f5f5;
+                    border-radius: 5px;
+                    color: #666;
+                }
+            `}</style>
         </div>
     );
 };

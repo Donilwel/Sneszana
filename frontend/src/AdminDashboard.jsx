@@ -88,9 +88,10 @@ export default function AdminDashboard({ token }) {
     useEffect(() => {
         const fetchPendingReviews = async () => {
             try {
-                const response = await fetch('/api/admin/reviews?status=checking', {
+                const response = await fetch('/api/admin/reviews', {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
                     }
                 });
 
@@ -131,6 +132,9 @@ export default function AdminDashboard({ token }) {
                         <span style={styles.badge}>{pendingReviewsCount}</span>
                     )}
                 </Link>
+                <Link to="/admin/couriers" style={styles.quickLink}>
+                    Управление курьерами
+                </Link>
             </div>
 
             {/* Основные карточки разделов */}
@@ -163,6 +167,12 @@ export default function AdminDashboard({ token }) {
                         <span style={styles.badge}>{pendingReviewsCount}</span>
                     )}
                 </div>
+
+                <Link to="/admin/couriers" style={styles.card}>
+                    <div style={styles.cardIcon}>🚴</div>
+                    <h3 style={styles.cardTitle}>Управление курьерами</h3>
+                    <p style={styles.cardDescription}>Просмотр и управление курьерами системы</p>
+                </Link>
 
                 <Link to="/admin/stats" style={styles.card}>
                     <div style={styles.cardIcon}>📊</div>

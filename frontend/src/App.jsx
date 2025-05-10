@@ -17,6 +17,7 @@ import WriteReview from "./WriteReview";
 import AdminDashboard from "./AdminDashboard";
 import AdminUsers from "./AdminUsers";
 import AdminReviews from "./AdminReviews";
+import AdminCouriers from "./AdminCouriers"; // Добавлен новый компонент
 import CookerDashboard from "./CookerDashboard";
 
 function App() {
@@ -183,6 +184,11 @@ function App() {
                         <Route path="/admin/reviews" element={
                             <PrivateRoute requiredRole="ADMIN_ROLE">
                                 <AdminReviews token={token} />
+                            </PrivateRoute>
+                        } />
+                        <Route path="/admin/couriers" element={
+                            <PrivateRoute requiredRole="ADMIN_ROLE">
+                                <AdminCouriers token={token} />
                             </PrivateRoute>
                         } />
 

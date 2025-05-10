@@ -208,6 +208,7 @@ function App() {
                                 <CourierOrders token={token} />
                             </PrivateRoute>
                         } />
+
                         {/* Cooker routes */}
                         <Route path="/cooker" element={
                             <PrivateRoute requiredRole="COOKER_ROLE">

@@ -86,8 +86,12 @@ func GetActuallOrdersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 1. Получаем заказы с OrderItems
 	var orders []models.Order
-	if err := migrations.DB.Where("status = ?", models.WAITFREECOURIER).Find(&orders).Error; err != nil {
+	if err := migrations.DB.
+		Preload("OrderItems").
+		Where("status = ?", models.WAITFREECOURIER).
+		Find(&orders).Error; err != nil {
 		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Database error while fetching orders")
 		http.Error(w, "Error fetching orders", http.StatusInternalServerError)
 		return
@@ -99,7 +103,59 @@ func GetActuallOrdersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.JSONFormat(w, r, orders)
+	// 2. Собираем все ID блюд из всех заказов
+	var dishIDs []uuid.UUID
+	for _, order := range orders {
+		for _, item := range order.OrderItems {
+			dishIDs = append(dishIDs, item.DishID)
+		}
+	}
+
+	// 3. Получаем информацию о блюдах
+	var dishes []models.Dish
+	if len(dishIDs) > 0 {
+		if err := migrations.DB.Where("id IN ?", dishIDs).Find(&dishes).Error; err != nil {
+			logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Database error while fetching dishes")
+			http.Error(w, "Error fetching dishes", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// 4. Создаем map для быстрого доступа к блюдам по ID
+	dishMap := make(map[uuid.UUID]models.Dish)
+	for _, dish := range dishes {
+		dishMap[dish.ID] = dish
+	}
+
+	// 5. Создаем структуру для ответа с объединенными данными
+	type OrderResponse struct {
+		models.Order
+		ItemsWithDishes []struct {
+			OrderItem models.OrderDish
+			Dish      models.Dish
+		} `json:"order_items"`
+	}
+
+	var response []OrderResponse
+	for _, order := range orders {
+		orderResp := OrderResponse{
+			Order: order,
+		}
+
+		for _, item := range order.OrderItems {
+			orderResp.ItemsWithDishes = append(orderResp.ItemsWithDishes, struct {
+				OrderItem models.OrderDish
+				Dish      models.Dish
+			}{
+				OrderItem: item,
+				Dish:      dishMap[item.DishID],
+			})
+		}
+
+		response = append(response, orderResp)
+	}
+
+	utils.JSONFormat(w, r, response)
 	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Orders retrieved successfully")
 }
 

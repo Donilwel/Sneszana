@@ -112,12 +112,20 @@ const CourierProfile = ({ token }) => {
         <div style={styles.container}>
             <header style={styles.header}>
                 <h1>Профиль курьера</h1>
-                <button
-                    onClick={() => navigate('/')}
-                    style={styles.backButton}
-                >
-                    ← На главную
-                </button>
+                <div style={styles.headerButtons}>
+                    <button
+                        onClick={() => navigate('/courier/orders')}
+                        style={styles.ordersButton}
+                    >
+                        Доступные заказы
+                    </button>
+                    <button
+                        onClick={() => navigate('/')}
+                        style={styles.backButton}
+                    >
+                        На главную
+                    </button>
+                </div>
             </header>
 
             <div style={styles.profileContainer}>
@@ -231,14 +239,25 @@ const styles = {
         borderBottom: '1px solid #eee',
         paddingBottom: '15px'
     },
+    headerButtons: {
+        display: 'flex',
+        gap: '10px'
+    },
+    ordersButton: {
+        padding: '8px 16px',
+        backgroundColor: '#17a2b8',
+        color: 'white',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer'
+    },
     backButton: {
         padding: '8px 16px',
         backgroundColor: '#6c757d',
         color: 'white',
         border: 'none',
         borderRadius: '4px',
-        cursor: 'pointer',
-        textDecoration: 'none'
+        cursor: 'pointer'
     },
     profileContainer: {
         display: 'grid',

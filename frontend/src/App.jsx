@@ -19,7 +19,8 @@ import AdminUsers from "./AdminUsers";
 import AdminReviews from "./AdminReviews";
 import AdminCouriers from "./AdminCouriers";
 import CookerDashboard from "./CookerDashboard";
-import CourierProfile from "./CourierProfile"; // Импортируем компонент профиля курьера
+import CourierProfile from "./CourierProfile";
+import CourierOrders from "./CourierOrders";
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem("token") || "");
@@ -202,7 +203,11 @@ function App() {
                                 <AdminCouriers token={token} />
                             </PrivateRoute>
                         } />
-
+                        <Route path="/courier/orders" element={
+                            <PrivateRoute requiredRole="COURIER_ROLE">
+                                <CourierOrders token={token} />
+                            </PrivateRoute>
+                        } />
                         {/* Cooker routes */}
                         <Route path="/cooker" element={
                             <PrivateRoute requiredRole="COOKER_ROLE">

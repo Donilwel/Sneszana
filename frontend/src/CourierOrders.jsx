@@ -123,7 +123,7 @@ const CourierOrders = ({ token }) => {
                                     <div style={styles.orderDetails}>
                                         <p><strong>Создан:</strong> {formatDate(order.CreatedAt)}</p>
                                         <p><strong>Сумма:</strong> {order.Price} ₽</p>
-                                        <p><strong>Позиций:</strong> {order.order_items?.length || 0}</p>
+                                        <p><strong>Позиций:</strong> {order.OrderItems?.length || 0}</p>
                                     </div>
 
                                     <button
@@ -160,29 +160,40 @@ const CourierOrders = ({ token }) => {
 
                             <div style={styles.detailsSection}>
                                 <h3 style={styles.sectionTitle}>Состав заказа</h3>
-                                {selectedOrder.order_items?.length > 0 ? (
+                                {selectedOrder.items?.length > 0 ? (
                                     <div style={styles.itemsTable}>
                                         <div style={styles.tableHeader}>
                                             <div style={styles.nameCol}>Название</div>
                                             <div style={styles.quantityCol}>Кол-во</div>
                                             <div style={styles.priceCol}>Цена</div>
                                         </div>
-                                        {selectedOrder.order_items.map(({ OrderItem, Dish }) => (
-                                            <div key={OrderItem.ID} style={styles.tableRow}>
+                                        {selectedOrder.items.map((item) => (
+                                            <div key={item.order_item.ID} style={styles.tableRow}>
                                                 <div style={styles.nameCol}>
-                                                    {Dish?.Name || `Позиция #${OrderItem.ID.slice(0, 4)}`}
+                                                    {item.dish?.Name || `Позиция #${item.order_item.ID.slice(0, 4)}`}
                                                 </div>
                                                 <div style={styles.quantityCol}>
-                                                    {OrderItem.Count}
+                                                    {item.order_item.Count}
                                                 </div>
                                                 <div style={styles.priceCol}>
-                                                    {Dish?.Price ? `${Dish.Price} ₽` : '-'}
+                                                    {item.dish?.Price ? `${item.dish.Price} ₽` : '-'}
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
                                     <p style={styles.noItems}>Состав заказа не указан</p>
+                                )}
+                            </div>
+
+                            <div style={styles.detailsSection}>
+                                <h3 style={styles.sectionTitle}>Адрес доставки</h3>
+                                {selectedOrder.address ? (
+                                    <div style={styles.addressDetails}>
+                                        <p><strong>Улица:</strong> {selectedOrder.address.street}</p>
+                                    </div>
+                                ) : (
+                                    <p style={styles.noItems}>Адрес доставки не указан</p>
                                 )}
                             </div>
 
@@ -333,6 +344,12 @@ const styles = {
     noItems: {
         color: '#666',
         fontStyle: 'italic'
+    },
+    addressDetails: {
+        backgroundColor: '#f0f0f0',
+        padding: '15px',
+        borderRadius: '5px',
+        marginTop: '10px'
     },
     acceptButton: {
         padding: '10px 20px',

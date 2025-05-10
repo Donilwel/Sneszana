@@ -127,32 +127,51 @@ func GetActuallOrdersHandler(w http.ResponseWriter, r *http.Request) {
 		dishMap[dish.ID] = dish
 	}
 
-	// 5. Создаем структуру для ответа с объединенными данными
+	// 5. Получаем адреса для всех заказов
+	var orderIDs []uuid.UUID
+	for _, order := range orders {
+		orderIDs = append(orderIDs, order.ID)
+	}
+
+	var addresses []models.Address
+	if err := migrations.DB.Where("order_id IN ?", orderIDs).Find(&addresses).Error; err != nil {
+		logging.LogRequest(logrus.ErrorLevel, userID, r, http.StatusInternalServerError, err, startTime, "Database error while fetching addresses")
+		http.Error(w, "Error fetching addresses", http.StatusInternalServerError)
+		return
+	}
+
+	addressMap := make(map[uuid.UUID]models.Address)
+	for _, address := range addresses {
+		addressMap[address.OrderID] = address
+	}
+
+	// 6. Создаем структуру для ответа
+	type OrderItemWithDish struct {
+		OrderItem models.OrderDish `json:"order_item"`
+		Dish      models.Dish      `json:"dish"`
+	}
+
 	type OrderResponse struct {
 		models.Order
-		ItemsWithDishes []struct {
-			OrderItem models.OrderDish
-			Dish      models.Dish
-		} `json:"order_items"`
+		Items   []OrderItemWithDish `json:"items"`
+		Address models.Address      `json:"address"`
 	}
 
 	var response []OrderResponse
 	for _, order := range orders {
-		orderResp := OrderResponse{
-			Order: order,
-		}
-
+		var items []OrderItemWithDish
 		for _, item := range order.OrderItems {
-			orderResp.ItemsWithDishes = append(orderResp.ItemsWithDishes, struct {
-				OrderItem models.OrderDish
-				Dish      models.Dish
-			}{
+			items = append(items, OrderItemWithDish{
 				OrderItem: item,
 				Dish:      dishMap[item.DishID],
 			})
 		}
 
-		response = append(response, orderResp)
+		response = append(response, OrderResponse{
+			Order:   order,
+			Items:   items,
+			Address: addressMap[order.ID],
+		})
 	}
 
 	utils.JSONFormat(w, r, response)
@@ -289,7 +308,6 @@ func SetCourierOnOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.JSONFormat(w, r, order)
-	utils.JSONFormat(w, r, address)
 	logging.LogRequest(logrus.InfoLevel, userID, r, http.StatusOK, nil, startTime, "Courier successfully assigned to order")
 }
 

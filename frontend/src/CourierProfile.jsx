@@ -65,7 +65,37 @@ const CourierProfile = ({ token }) => {
         }));
     };
 
-    // Обновление профиля курьера
+    // Обновление статуса курьера (через URL-параметр)
+    const handleStatusUpdate = async (newStatus) => {
+        try {
+            const res = await fetch(`/api/courier/status/set?status=${newStatus}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!res.ok) {
+                throw new Error('Не удалось обновить статус');
+            }
+
+            const updatedData = await res.json();
+            setProfile(prev => ({
+                ...prev,
+                Status: updatedData.status
+            }));
+            setFormData(prev => ({
+                ...prev,
+                status: updatedData.status
+            }));
+            alert('Статус успешно обновлен');
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    // Обновление профиля курьера (транспорт)
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -76,8 +106,7 @@ const CourierProfile = ({ token }) => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    vehicle: formData.vehicle,
-                    status: formData.status
+                    vehicle: formData.vehicle
                 })
             });
 
@@ -99,8 +128,15 @@ const CourierProfile = ({ token }) => {
         switch(status) {
             case 'ACTIVE': return 'Активен';
             case 'UNACTIVE': return 'Неактивен';
-            case 'ON_DELIVERY': return 'На доставке';
+            case 'WAITING': return 'Ожидает заказ';
             default: return status;
+        }
+    };
+
+    // Быстрое изменение статуса
+    const quickStatusChange = (newStatus) => {
+        if (confirm(`Вы уверены, что хотите изменить статус на "${getStatusName(newStatus)}"?`)) {
+            handleStatusUpdate(newStatus);
         }
     };
 
@@ -137,6 +173,40 @@ const CourierProfile = ({ token }) => {
                         {avatar.letter}
                     </div>
                     <h2 style={styles.userName}>{profile.User.Name}</h2>
+
+                    {/* Быстрое управление статусом */}
+                    <div style={styles.quickStatusButtons}>
+                        <button
+                            onClick={() => quickStatusChange('ACTIVE')}
+                            style={{
+                                ...styles.statusButton,
+                                ...(profile.Status === 'ACTIVE' && styles.activeStatusButton)
+                            }}
+                            disabled={profile.Status === 'ACTIVE'}
+                        >
+                            Активен
+                        </button>
+                        <button
+                            onClick={() => quickStatusChange('UNACTIVE')}
+                            style={{
+                                ...styles.statusButton,
+                                ...(profile.Status === 'UNACTIVE' && styles.inactiveStatusButton)
+                            }}
+                            disabled={profile.Status === 'UNACTIVE'}
+                        >
+                            Неактивен
+                        </button>
+                        <button
+                            onClick={() => quickStatusChange('WAITING')}
+                            style={{
+                                ...styles.statusButton,
+                                ...(profile.Status === 'WAITING' && styles.waitingStatusButton)
+                            }}
+                            disabled={profile.Status === 'WAITING'}
+                        >
+                            Ожидает
+                        </button>
+                    </div>
                 </div>
 
                 <div style={styles.userInfo}>
@@ -144,6 +214,15 @@ const CourierProfile = ({ token }) => {
                     <p><strong>Телефон:</strong> {profile.User.PhoneNumber}</p>
                     <p><strong>Рейтинг:</strong> {profile.Rating || 'Нет оценок'}</p>
                     <p><strong>Выполнено заказов:</strong> {profile.OrdersCount}</p>
+                    <p>
+                        <strong>Текущий статус:</strong>
+                        <span style={{
+                            ...styles.statusBadge,
+                            ...getStatusStyle(profile.Status)
+                        }}>
+                            {getStatusName(profile.Status)}
+                        </span>
+                    </p>
                 </div>
 
                 {editMode ? (
@@ -162,21 +241,6 @@ const CourierProfile = ({ token }) => {
                                 <option value="BIKE">Велосипед</option>
                                 <option value="SCOOTER">Скутер</option>
                                 <option value="FOOT">Пешком</option>
-                            </select>
-                        </div>
-
-                        <div style={styles.formGroup}>
-                            <label style={styles.label}>Статус:</label>
-                            <select
-                                name="status"
-                                value={formData.status}
-                                onChange={handleChange}
-                                style={styles.select}
-                                required
-                            >
-                                <option value="UNACTIVE">Неактивен</option>
-                                <option value="ACTIVE">Активен</option>
-                                <option value="ON_DELIVERY">На доставке</option>
                             </select>
                         </div>
 
@@ -199,22 +263,13 @@ const CourierProfile = ({ token }) => {
                 ) : (
                     <div style={styles.courierInfo}>
                         <h3>Информация о курьере</h3>
-                        <p><strong>Транспорт:</strong> {profile.Vehicle}</p>
-                        <p>
-                            <strong>Статус:</strong>
-                            <span style={{
-                                ...styles.statusBadge,
-                                ...getStatusStyle(profile.Status)
-                            }}>
-                                {getStatusName(profile.Status)}
-                            </span>
-                        </p>
+                        <p><strong>Транспорт:</strong> {profile.Vehicle || 'Не указано'}</p>
 
                         <button
                             onClick={() => setEditMode(true)}
                             style={styles.editButton}
                         >
-                            Редактировать профиль
+                            Редактировать транспорт
                         </button>
                     </div>
                 )}
@@ -222,7 +277,6 @@ const CourierProfile = ({ token }) => {
         </div>
     );
 };
-
 // Стили
 const styles = {
     container: {
@@ -285,6 +339,35 @@ const styles = {
         color: 'white',
         fontWeight: 'bold',
         boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+    },
+    quickStatusButtons: {
+        display: 'flex',
+        gap: '10px',
+        flexWrap: 'wrap',
+        justifyContent: 'center'
+    },
+    statusButton: {
+        padding: '6px 12px',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '14px',
+        transition: 'all 0.3s ease'
+    },
+    activeStatusButton: {
+        backgroundColor: '#28a745',
+        color: 'white',
+        cursor: 'default'
+    },
+    inactiveStatusButton: {
+        backgroundColor: '#dc3545',
+        color: 'white',
+        cursor: 'default'
+    },
+    waitingStatusButton: {
+        backgroundColor: '#ffc107',
+        color: '#212529',
+        cursor: 'default'
     },
     userInfo: {
         backgroundColor: '#f8f9fa',
@@ -386,9 +469,8 @@ const getStatusStyle = (status) => {
     switch(status) {
         case 'ACTIVE': return { backgroundColor: '#d4edda', color: '#155724' };
         case 'UNACTIVE': return { backgroundColor: '#f8d7da', color: '#721c24' };
-        case 'ON_DELIVERY': return { backgroundColor: '#fff3cd', color: '#856404' };
+        case 'WAITING': return { backgroundColor: '#fff3cd', color: '#856404' };
         default: return { backgroundColor: '#e2e3e5', color: '#383d41' };
     }
 };
-
 export default CourierProfile;

@@ -17,8 +17,9 @@ import WriteReview from "./WriteReview";
 import AdminDashboard from "./AdminDashboard";
 import AdminUsers from "./AdminUsers";
 import AdminReviews from "./AdminReviews";
-import AdminCouriers from "./AdminCouriers"; // Добавлен новый компонент
+import AdminCouriers from "./AdminCouriers";
 import CookerDashboard from "./CookerDashboard";
+import CourierProfile from "./CourierProfile"; // Импортируем компонент профиля курьера
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem("token") || "");
@@ -38,6 +39,8 @@ function App() {
                         navigate("/admin");
                     } else if (payload.role === "COOKER_ROLE") {
                         navigate("/cooker");
+                    } else if (payload.role === "COURIER_ROLE") {
+                        navigate("/courier");
                     }
                 }
             } catch (err) {
@@ -88,7 +91,8 @@ function App() {
                 <header className="app-header">
                     <Link to={
                         userRole === "ADMIN_ROLE" ? "/admin" :
-                            userRole === "COOKER_ROLE" ? "/cooker" : "/"
+                            userRole === "COOKER_ROLE" ? "/cooker" :
+                                userRole === "COURIER_ROLE" ? "/courier" : "/"
                     } className="app-logo">
                         <span role="img" aria-label="restaurant">🍽</span> Cнежана
                     </Link>
@@ -105,6 +109,11 @@ function App() {
                                     Панель повара
                                 </Link>
                             )}
+                            {userRole === "COURIER_ROLE" && window.location.pathname !== "/courier" && (
+                                <Link to="/courier" className="admin-link">
+                                    Профиль курьера
+                                </Link>
+                            )}
                             <Logout token={token} onLogout={() => setToken("")} />
                         </div>
                     )}
@@ -119,6 +128,8 @@ function App() {
                                     <Navigate to="/admin" replace />
                                 ) : userRole === "COOKER_ROLE" ? (
                                     <Navigate to="/cooker" replace />
+                                ) : userRole === "COURIER_ROLE" ? (
+                                    <Navigate to="/courier" replace />
                                 ) : (
                                     <Dishes token={token} />
                                 )
@@ -196,6 +207,13 @@ function App() {
                         <Route path="/cooker" element={
                             <PrivateRoute requiredRole="COOKER_ROLE">
                                 <CookerDashboard token={token} />
+                            </PrivateRoute>
+                        } />
+
+                        {/* Courier routes */}
+                        <Route path="/courier" element={
+                            <PrivateRoute requiredRole="COURIER_ROLE">
+                                <CourierProfile token={token} />
                             </PrivateRoute>
                         } />
 

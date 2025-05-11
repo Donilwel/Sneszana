@@ -115,28 +115,6 @@ export default function AdminDashboard({ token }) {
         <div style={styles.dashboard}>
             <h1 style={styles.title}>Панель администратора</h1>
 
-            {/* Быстрое меню для важных действий */}
-            <div style={styles.quickMenu}>
-                <Link to="/admin/users/new" style={styles.quickLink}>
-                    + Добавить пользователя
-                </Link>
-                <Link to="/admin/dishes/new" style={styles.quickLink}>
-                    + Добавить блюдо
-                </Link>
-                <Link to="/admin/orders" style={styles.quickLink}>
-                    Последние заказы
-                </Link>
-                <Link to="/admin/reviews" style={styles.quickLink}>
-                    Проверить отзывы
-                    {pendingReviewsCount > 0 && (
-                        <span style={styles.badge}>{pendingReviewsCount}</span>
-                    )}
-                </Link>
-                <Link to="/admin/couriers" style={styles.quickLink}>
-                    Управление курьерами
-                </Link>
-            </div>
-
             {/* Основные карточки разделов */}
             <div style={styles.grid}>
                 <Link to="/admin/users" style={styles.card}>
@@ -150,23 +128,11 @@ export default function AdminDashboard({ token }) {
                     <h3 style={styles.cardTitle}>Управление меню</h3>
                     <p style={styles.cardDescription}>Редактирование блюд, категорий и ингредиентов</p>
                 </Link>
-
-                <Link to="/admin/orders" style={styles.card}>
-                    <div style={styles.cardIcon}>📦</div>
-                    <h3 style={styles.cardTitle}>Управление заказами</h3>
-                    <p style={styles.cardDescription}>Просмотр и управление всеми заказами</p>
+                <Link to="/admin/reviews" style={styles.card}>
+                    <div style={styles.cardIcon}>📝</div>
+                    <h3 style={styles.cardTitle}>Управление отзывами</h3>
+                    <p style={styles.cardDescription}>Модерация и управление отзывами пользователей</p>
                 </Link>
-
-                <div style={styles.cardContainer}>
-                    <Link to="/admin/reviews" style={styles.card}>
-                        <div style={styles.cardIcon}>📝</div>
-                        <h3 style={styles.cardTitle}>Управление отзывами</h3>
-                        <p style={styles.cardDescription}>Модерация и управление отзывами пользователей</p>
-                    </Link>
-                    {pendingReviewsCount > 0 && (
-                        <span style={styles.badge}>{pendingReviewsCount}</span>
-                    )}
-                </div>
 
                 <Link to="/admin/couriers" style={styles.card}>
                     <div style={styles.cardIcon}>🚴</div>
@@ -174,17 +140,6 @@ export default function AdminDashboard({ token }) {
                     <p style={styles.cardDescription}>Просмотр и управление курьерами системы</p>
                 </Link>
 
-                <Link to="/admin/stats" style={styles.card}>
-                    <div style={styles.cardIcon}>📊</div>
-                    <h3 style={styles.cardTitle}>Статистика</h3>
-                    <p style={styles.cardDescription}>Аналитика и отчеты по работе ресторана</p>
-                </Link>
-
-                <Link to="/admin/settings" style={styles.card}>
-                    <div style={styles.cardIcon}>⚙️</div>
-                    <h3 style={styles.cardTitle}>Настройки</h3>
-                    <p style={styles.cardDescription}>Системные настройки приложения</p>
-                </Link>
             </div>
         </div>
     );

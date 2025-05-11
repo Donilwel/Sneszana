@@ -150,6 +150,12 @@ const CourierProfile = ({ token }) => {
                 <h1>Профиль курьера</h1>
                 <div style={styles.headerButtons}>
                     <button
+                        onClick={() => navigate('/courier/my-orders')}  // Измененный путь
+                        style={styles.myOrdersButton}  // Новый стиль для кнопки
+                    >
+                        Мои заказы
+                    </button>
+                    <button
                         onClick={() => navigate('/courier/orders')}
                         style={styles.ordersButton}
                     >
@@ -461,6 +467,15 @@ const styles = {
         backgroundColor: '#f8d7da',
         borderRadius: '4px',
         margin: '20px'
+    },
+    myOrdersButton: {
+        padding: '8px 16px',
+        backgroundColor: '#6f42c1',  // Фиолетовый цвет для отличия
+        color: 'white',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        marginRight: '10px'
     }
 };
 

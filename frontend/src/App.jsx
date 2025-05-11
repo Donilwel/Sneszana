@@ -21,6 +21,7 @@ import AdminCouriers from "./AdminCouriers";
 import CookerDashboard from "./CookerDashboard";
 import CourierProfile from "./CourierProfile";
 import CourierOrders from "./CourierOrders";
+import CourierMyOrders from "./CourierMyOrders.jsx";
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem("token") || "");
@@ -220,6 +221,18 @@ function App() {
                         <Route path="/courier" element={
                             <PrivateRoute requiredRole="COURIER_ROLE">
                                 <CourierProfile token={token} />
+                            </PrivateRoute>
+                        } />
+
+                        <Route path="/courier/orders" element={
+                            <PrivateRoute requiredRole="COURIER_ROLE">
+                                <CourierOrders token={token} />
+                            </PrivateRoute>
+                        } />
+
+                        <Route path="/courier/my-orders" element={
+                            <PrivateRoute requiredRole="COURIER_ROLE">
+                                <CourierMyOrders token={token} />
                             </PrivateRoute>
                         } />
 

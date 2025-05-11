@@ -101,21 +101,6 @@ function App() {
 
                     {token && (
                         <div className="auth-actions">
-                            {userRole === "ADMIN_ROLE" && window.location.pathname !== "/admin" && (
-                                <Link to="/admin" className="admin-link">
-                                    Админ-панель
-                                </Link>
-                            )}
-                            {userRole === "COOKER_ROLE" && window.location.pathname !== "/cooker" && (
-                                <Link to="/cooker" className="admin-link">
-                                    Панель повара
-                                </Link>
-                            )}
-                            {userRole === "COURIER_ROLE" && window.location.pathname !== "/courier" && (
-                                <Link to="/courier" className="admin-link">
-                                    Профиль курьера
-                                </Link>
-                            )}
                             <Logout token={token} onLogout={() => setToken("")} />
                         </div>
                     )}

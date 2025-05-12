@@ -6,6 +6,7 @@ const AdminCouriers = ({ token }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [filter, setFilter] = useState('all');
+    const [updatingStatus, setUpdatingStatus] = useState(null);
 
     useEffect(() => {
         const fetchCouriers = async () => {
@@ -51,11 +52,41 @@ const AdminCouriers = ({ token }) => {
         fetchCouriers();
     }, [token, filter]);
 
+    const updateCourierStatus = async (courierId, newStatus) => {
+        try {
+            setUpdatingStatus(courierId);
+
+            const res = await fetch(`/api/admin/couriers/${courierId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (!res.ok) {
+                throw new Error('Не удалось обновить статус курьера');
+            }
+
+            setCouriers(couriers.map(courier =>
+                courier.ID === courierId
+                    ? { ...courier, Status: newStatus }
+                    : courier
+            ));
+        } catch (err) {
+            console.error('Ошибка обновления статуса:', err);
+            setError(err.message);
+        } finally {
+            setUpdatingStatus(null);
+        }
+    };
+
     const renderStatus = (status) => {
         const statusMap = {
             'ACTIVE': { text: 'Активен', color: '#28a745', bg: '#d4edda' },
             'UNACTIVE': { text: 'Неактивен', color: '#6c757d', bg: '#e2e3e5' },
-            'BLOCKED': { text: 'Заблокирован', color: '#dc3545', bg: '#f8d7da' }
+            'WAITING': { text: 'Ожидающий', color: '#dc3545', bg: '#f8d7da' }
         };
 
         const statusInfo = statusMap[status] || { text: status, color: '#000', bg: '#fff' };
@@ -86,6 +117,35 @@ const AdminCouriers = ({ token }) => {
         return vehicleMap[vehicle] || vehicle;
     };
 
+    const renderStatusDropdown = (courier) => {
+        const statusOptions = [
+            { value: 'ACTIVE', label: 'Активен' },
+            { value: 'UNACTIVE', label: 'Неактивен' },
+            { value: 'WAITING', label: 'Ждущий заказы'},
+        ];
+
+        return (
+            <select
+                value={courier.Status}
+                onChange={(e) => updateCourierStatus(courier.ID, e.target.value)}
+                disabled={updatingStatus === courier.ID}
+                style={{
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid #ddd',
+                    cursor: 'pointer',
+                    backgroundColor: '#fff'
+                }}
+            >
+                {statusOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                        {option.label}
+                    </option>
+                ))}
+            </select>
+        );
+    };
+
     if (loading) return <div style={styles.loading}>Загрузка курьеров...</div>;
 
     return (
@@ -103,7 +163,7 @@ const AdminCouriers = ({ token }) => {
                         <option value="all">Все курьеры</option>
                         <option value="ACTIVE">Активные</option>
                         <option value="UNACTIVE">Неактивные</option>
-                        <option value="BLOCKED">Заблокированные</option>
+                        <option value="WAITINF">Ожидающие</option>
                     </select>
                 </div>
 
@@ -121,7 +181,7 @@ const AdminCouriers = ({ token }) => {
                     <table style={styles.table}>
                         <thead>
                         <tr style={styles.headerRow}>
-                            {['ID', 'Имя', 'Email', 'Телефон', 'Рейтинг', 'Транспорт', 'Заказов', 'Статус', 'Дата регистрации'].map((header) => (
+                            {['ID', 'Имя', 'Email', 'Телефон', 'Рейтинг', 'Транспорт', 'Заказов', 'Статус', 'Изменить статус', 'Дата регистрации'].map((header) => (
                                 <th key={header} style={styles.th}>{header}</th>
                             ))}
                         </tr>
@@ -137,6 +197,13 @@ const AdminCouriers = ({ token }) => {
                                 <td style={styles.td}>{renderVehicle(courier.Vehicle)}</td>
                                 <td style={styles.td}>{courier.OrdersCount}</td>
                                 <td style={styles.td}>{renderStatus(courier.Status)}</td>
+                                <td style={styles.td}>
+                                    {updatingStatus === courier.ID ? (
+                                        <span>Обновление...</span>
+                                    ) : (
+                                        renderStatusDropdown(courier)
+                                    )}
+                                </td>
                                 <td style={styles.td}>
                                     {new Date(courier.CreatedAt).toLocaleDateString()}
                                 </td>
